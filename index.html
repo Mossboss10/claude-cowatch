@@ -66,7 +66,8 @@
     body.cinema-mode form, 
     body.cinema-mode .history-container,
     body.cinema-mode .live-matches,
-    body.cinema-mode .ad-disclaimer {
+    body.cinema-mode .ad-disclaimer,
+    body.cinema-mode .bug-bar-container {
       opacity: 0.1;
       filter: blur(2px);
       pointer-events: none;
@@ -118,7 +119,6 @@
       border-radius: 50px;
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(10px);
-      align-items: center; /* Ensures the bug button aligns with the tabs */
     }
 
     .tab-btn {
@@ -148,20 +148,36 @@
       background: var(--hover-bg);
     }
 
-    /* ---------------- Bug Button ---------------- */
+    /* ---------------- Bug Button Styling ---------------- */
+    .bug-bar-container {
+      margin-top: 15px;
+      width: 100%;
+      max-width: 700px; /* Matches the exact width of your inputs/history containers */
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeInUp 0.5s ease forwards 0.35s;
+    }
+
     .bug-button {
+      width: 100%;
       background: #FF9932;
       color: white;
       border: none;
-      padding: 12px 18px;
-      border-radius: 12px;
+      padding: 14px 20px;
+      border-radius: 16px;
       cursor: pointer;
       font-weight: bold;
-      transition: opacity 0.2s ease;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 12px rgba(255, 153, 50, 0.2);
     }
 
     .bug-button:hover {
-      opacity: 0.85;
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 15px rgba(255, 153, 50, 0.3);
     }
 
     /* ---------------- Input Forms & Warnings ---------------- */
@@ -568,10 +584,6 @@
     <button class="tab-btn" data-tab="live">
       <i class="fa-solid fa-satellite-dish"></i> Live
     </button>
-    
-    <button onclick="reportBug()" class="bug-button">
-      🐛 Report Bug
-    </button>
   </div>
 
   <div class="input-wrapper tab-content" id="video-tab">
@@ -635,6 +647,12 @@
     <div class="control-icon" onclick="clearHistory()" title="Clear History">
       <i class="fa-solid fa-trash"></i>
     </div>
+  </div>
+
+  <div class="bug-bar-container">
+    <button onclick="reportBug()" class="bug-button">
+      🐛 Report Bug
+    </button>
   </div>
 
   <div class="history-container" id="historyContainer">
@@ -853,7 +871,7 @@
     manageMatchVisibility();
     setInterval(manageMatchVisibility, 60000);
 
-    // ---------------- ADDED: Bug Report Function ----------------
+    // ---------------- Bug Report Function ----------------
     function reportBug() {
       window.open(
         "https://docs.google.com/forms/d/e/1FAIpQLSdLiRY-emj0eq7KrdY8ekh2E-TSA57DHfoQyE1ow8QywOsQyQ/viewform?usp=header",
