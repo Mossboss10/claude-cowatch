@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YT Player | Ultimate YouTube Client</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    /* ---------------- Variables & Reset (Light Theme) ---------------- */
+    :root {
+      --bg-light: #F1F6F4;       /* Arctic Powder */
+      --primary: #FFC801;        /* Forsythia */
+      --secondary: #114C5A;      /* Nocturnal */
+      --hover-bg: #D9E8E2;       /* Mystic Mint */
+      --gradient-alt: #FF9932;   /* Deep Saffron */
+      --text-main: #172B36;      /* Oceanic Noir */
+      --glass-bg: rgba(255, 255, 255, 0.6);
+      --glass-border: rgba(17, 76, 90, 0.15);
+      --accent-glow: 0 0 20px rgba(255, 200, 1, 0.4);
+      --text-muted: #114C5A;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-light);
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(255, 200, 1, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(17, 76, 90, 0.1) 0%, transparent 40%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      color: var(--text-main);
+      transition: background 0.5s ease;
+    }
+
+    /* ---------------- Cinema Mode ---------------- */
+    body.cinema-mode {
+      background: var(--text-main);
+    }
+    
+    body.cinema-mode .logo-area, 
+    body.cinema-mode .tabs, 
+    body.cinema-mode form, 
+    body.cinema-mode .history-container,
+    body.cinema-mode .live-matches,
+    body.cinema-mode .ad-disclaimer {
+      opacity: 0.1;
+      filter: blur(2px);
+      pointer-events: none;
+      transition: all 0.5s ease;
+    }
+
+    body.cinema-mode .player-wrapper {
+      box-shadow: 0 0 50px rgba(17, 76, 90, 0.6);
+      transform: scale(1.02);
+      z-index: 999;
+    }
+
+    /* ---------------- Branding ---------------- */
+    .logo-area {
+      text-align: center;
+      margin-bottom: 30px;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    .logo-area h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3rem;
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--text-main) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -2px;
+      margin-bottom: 5px;
+    }
+
+    .badge {
+      background: linear-gradient(90deg, var(--primary), var(--gradient-alt));
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-main);
+      box-shadow: var(--accent-glow);
+    }
+
+    /* ---------------- Controls & Tabs ---------------- */
+    .tabs {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      background: var(--glass-bg);
+      padding: 6px;
+      border-radius: 50px;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+    }
+
+    .tab-btn {
+      padding: 10px 28px;
+      border-radius: 40px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn i { font-size: 0.9rem; }
+
+    .tab-btn.active {
+      background: var(--secondary);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(17, 76, 90, 0.2);
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text-main);
+      background: var(--hover-bg);
+    }
+
+    /* ---------------- Input Forms & Warnings ---------------- */
+    .input-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 25px;
+    }
+
+    .ad-disclaimer {
+      background: rgba(255, 153, 50, 0.15);
+      border: 1px solid var(--gradient-alt);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .ad-disclaimer i {
+      color: var(--gradient-alt);
+      font-size: 1.2rem;
+      margin-top: 2px;
+    }
+
+    form {
+      display: flex;
+      width: 100%;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 16px 24px;
+      border-radius: 16px;
+      color: var(--text-main);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(17, 76, 90, 0.5);
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(255, 200, 1, 0.2);
+      background: #ffffff;
+    }
+
+    button.action-btn {
+      background: linear-gradient(135deg, var(--primary), var(--gradient-alt));
+      border: none;
+      padding: 0 30px;
+      border-radius: 16px;
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button.action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(255, 153, 50, 0.3);
+    }
+
+    /* ---------------- Live Matches UI ---------------- */
+    .live-matches {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+    }
+
+    .match-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 20px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      /* Controlled via JavaScript visibility logic */
+      display: none; 
+    }
+
+    .match-card:hover {
+      background: var(--hover-bg);
+      border-color: var(--secondary);
+      transform: translateY(-2px);
+    }
+
+    .match-info .match-teams {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 5px;
+    }
+
+    .match-info .match-teams .vs {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0 10px;
+      font-weight: 500;
+    }
+
+    .match-info .match-stage {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .match-status {
+      text-align: right;
+    }
+
+    .match-status .match-time {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gradient-alt);
+    }
+
+    .match-status .stream-time {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      background: rgba(17, 76, 90, 0.05);
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    /* ---------------- Player Container ---------------- */
+    .player-wrapper {
+      width: 100%;
+      max-width: 1000px;
+      aspect-ratio: 16/9;
+      background: var(--text-main);
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 50px rgba(17, 43, 54, 0.15);
+      position: relative;
+      animation: popIn 0.5s ease;
+    }
+
+    #playerContainer {
+      width: 100%;
+      height: 100%; 
+    }
+
+    iframe, video {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block; 
+      outline: none;
+    }
+
+    .placeholder-state {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: rgba(255,255,255,0.7);
+      background: radial-gradient(circle at center, rgba(255,255,255,0.05), transparent);
+    }
+
+    .placeholder-state i {
+      font-size: 4rem;
+      margin-bottom: 20px;
+      opacity: 0.5;
+      color: var(--primary);
+    }
+
+    /* ---------------- Controls Bar ---------------- */
+    .controls-bar {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeInUp 0.5s ease forwards 0.3s;
+    }
+
+    .control-icon {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-icon:hover {
+      background: var(--hover-bg);
+      color: var(--text-main);
+      border-color: var(--secondary);
+    }
+
+    .control-icon.active {
+      background: var(--secondary);
+      color: #fff;
+      border-color: var(--secondary);
+    }
+
+    /* ---------------- History Section ---------------- */
+    .history-container {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 700px;
+      display: none;
+    }
+
+    .history-header {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 15px;
+      border-bottom: 2px solid var(--glass-border);
+      padding-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: var(--glass-bg);
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 1px solid transparent;
+      color: var(--text-main);
+    }
+
+    .history-item:hover {
+      background: var(--hover-bg);
+      border-color: var(--secondary);
+      transform: translateX(5px);
+    }
+
+    .history-item i { color: var(--secondary); }
+    .history-text { font-size: 0.95rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
+
+    /* ---------------- Terms of Service Modal ---------------- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(23, 43, 54, 0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .tos-modal {
+      background: var(--bg-light);
+      width: 90%;
+      max-width: 600px;
+      border-radius: 20px;
+      padding: 30px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .tos-modal {
+      transform: translateY(0);
+    }
+
+    .tos-modal h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      margin-bottom: 15px;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tos-modal h2 i { color: var(--primary); }
+
+    .tos-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      margin-bottom: 20px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .tos-content h3 {
+      font-size: 1.05rem;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      color: var(--secondary);
+    }
+    
+    .tos-content h3:first-child { margin-top: 0; }
+
+    .tos-btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--secondary), var(--text-main));
+      color: #fff;
+      border: none;
+      padding: 15px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tos-btn:hover {
+      box-shadow: 0 10px 20px rgba(17, 76, 90, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* ---------------- Animations ---------------- */
+    @keyframes popIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="modal-overlay" id="tosOverlay">
+    <div class="tos-modal">
+      <h2><i class="fa-solid fa-file-contract"></i> Terms of Service</h2>
+      <div class="tos-content">
+        <h3>1. Third-Party Content & Advertisements</h3>
+        <p>This platform acts as an aggregation client. We do not host, broadcast, or transmit any of the live streams provided on the "Live" tab. All media is embedded from third-party sources. Consequently, we have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party web sites or services. <strong>You may encounter external pop-ups or advertisements when initiating a stream. These are generated by the external host, not by YT Player.</strong></p>
+        
+        <h3>2. Intellectual Property Rights</h3>
+        <p>The layout, design, and proprietary code of YT Player are protected by copyright. You may not reproduce, distribute, modify, or create derivative works of our interface without explicit permission. We respect the intellectual property rights of others and expect users to do the same regarding the streams they access.</p>
+        
+        <h3>3. Limitation of Liability</h3>
+        <p>Your use of the service is at your sole risk. The service is provided on an "AS IS" and "AS AVAILABLE" basis. We do not guarantee uninterrupted access to any particular stream, as availability depends entirely on the third-party providers.</p>
+      </div>
+      <button class="tos-btn" onclick="acceptToS()">I Understand & Accept</button>
+    </div>
+  </div>
+
+  <div class="logo-area">
+    <h1>YT <span style="font-weight:300">PLAYER</span></h1>
+    <span class="badge">v3.8 Stream Hub</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="video">
+      <i class="fa-solid fa-play"></i> Video
+    </button>
+    <button class="tab-btn" data-tab="channel">
+      <i class="fa-solid fa-list-ul"></i> Channel
+    </button>
+    <button class="tab-btn" data-tab="live">
+      <i class="fa-solid fa-satellite-dish"></i> Live
+    </button>
+  </div>
+
+  <div class="input-wrapper tab-content" id="video-tab">
+    <form id="videoForm">
+      <input type="text" id="videoInput" placeholder="Paste YouTube Link..." autocomplete="off"/>
+      <button type="submit" class="action-btn"><i class="fa-solid fa-bolt"></i></button>
+    </form>
+  </div>
+
+  <div class="input-wrapper tab-content" id="channel-tab" style="display:none;">
+    <form id="channelForm">
+      <input type="text" id="channelInput" placeholder="Channel Link or Playlist ID" autocomplete="off"/>
+      <button type="submit" class="action-btn"><i class="fa-solid fa-tower-broadcast"></i></button>
+    </form>
+    <div style="margin-top:10px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
+      <i class="fa-solid fa-circle-info"></i> Supports <strong>/channel/UC...</strong> or <strong>Playlist URL</strong>
+    </div>
+  </div>
+
+  <div class="input-wrapper tab-content" id="live-tab" style="display:none;">
+    
+    <div class="ad-disclaimer">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div>
+        <strong>Ad Warning:</strong> When you click play on a stream, it may try to open an advertisement in a new website or tab. Just close the new window and come back to this page to watch your match.
+      </div>
+    </div>
+
+    <div class="live-matches">
+      
+      <div class="match-card" id="franceMoroccoMatch" onclick="checkStreamTime('https://sportspass.shop/soccer/fifa2026.html', 20, 0)">
+        <div class="match-info">
+          <div class="match-teams">🇫🇷 France <span class="vs">vs</span> 🇲🇦 Morocco</div>
+          <div class="match-stage">Live Match</div>
+        </div>
+        <div class="match-status">
+          <div class="match-time">Tomorrow 21:00</div>
+          <div class="stream-time">Opens 20:00</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="player-wrapper">
+    <div id="playerContainer">
+      <div class="placeholder-state">
+        <i class="fa-brands fa-youtube"></i>
+        <p>Ready to Stream</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls-bar">
+    <div class="control-icon" id="cinemaToggle" title="Cinema Mode">
+      <i class="fa-solid fa-lightbulb"></i>
+    </div>
+    <div class="control-icon" id="refreshPlayer" title="Reload Player">
+      <i class="fa-solid fa-rotate-right"></i>
+    </div>
+    <div class="control-icon" onclick="clearHistory()" title="Clear History">
+      <i class="fa-solid fa-trash"></i>
+    </div>
+  </div>
+
+  <div class="history-container" id="historyContainer">
+    <div class="history-header">
+      <span>Recently Watched</span>
+    </div>
+    <div id="historyList"></div>
+  </div>
+
+  <script>
+    // ---------------- State & Config ----------------
+    const playerContainer = document.getElementById("playerContainer");
+    const historyList = document.getElementById("historyList");
+    const historyContainer = document.getElementById("historyContainer");
+    const tosOverlay = document.getElementById("tosOverlay");
+    
+    // ---------------- Terms of Service Logic ----------------
+    function checkToS() {
+      const accepted = localStorage.getItem('auraTosAccepted');
+      if (!accepted) {
+        tosOverlay.classList.add('show');
+      }
+    }
+
+    function acceptToS() {
+      localStorage.setItem('auraTosAccepted', 'true');
+      tosOverlay.classList.remove('show');
+    }
+    
+    // ---------------- Tab Switching ----------------
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    tabButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        
+        document.querySelectorAll(".tab-content").forEach(tab => {
+          tab.style.display = "none";
+        });
+        document.getElementById(`${btn.dataset.tab}-tab`).style.display = "block";
+
+        // Check ToS when user clicks the live tab
+        if(btn.dataset.tab === 'live') {
+          checkToS();
+        }
+      });
+    });
+
+    // ---------------- Video Logic ----------------
+    document.getElementById("videoForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const input = document.getElementById("videoInput").value.trim();
+      let videoId = "";
+      let startTime = 0;
+
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = input.match(regExp);
+      if (match && match[2].length === 11) {
+        videoId = match[2];
+      } else if (input.length === 11) {
+        videoId = input;
+      }
+
+      const timeMatch = input.match(/[?&]t=([^&]+)/);
+      if(timeMatch) {
+        let t = timeMatch[1];
+        if(t.includes('m') || t.includes('s')) {
+            let m = 0, s = 0;
+            if(t.includes('m')) m = parseInt(t.split('m')[0]);
+            if(t.includes('s')) s = parseInt(t.split('s')[0].split('m').pop());
+            startTime = (m * 60) + s;
+        } else {
+            startTime = parseInt(t);
+        }
+      }
+
+      if (videoId) {
+        loadVideo(videoId, startTime);
+        addToHistory("Video: " + videoId, videoId, 'video');
+      } else {
+        alert("Invalid YouTube Video Link");
+      }
+    });
+
+    function loadVideo(id, start = 0) {
+      playerContainer.innerHTML = `
+        <iframe 
+          src="https://www.youtube.com/embed/${id}?autoplay=1&start=${start}&modestbranding=1&rel=0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>`;
+    }
+
+    // ---------------- Channel/Playlist Logic ----------------
+    document.getElementById("channelForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const url = document.getElementById("channelInput").value.trim();
+      let listId = "";
+
+      if(url.includes("list=")) {
+        listId = url.split("list=")[1].split("&")[0];
+      } else if (url.includes("/channel/UC")) {
+        const channelId = url.split("/channel/")[1].split(/[/?]/)[0];
+        listId = "UU" + channelId.substring(2);
+      }
+
+      if (listId) {
+        loadPlaylist(listId);
+        addToHistory("Playlist: " + listId, listId, 'playlist');
+      } else {
+        alert("Please use a Playlist URL or a 'channel/UC...' URL.");
+      }
+    });
+
+    function loadPlaylist(listId) {
+      playerContainer.innerHTML = `
+        <iframe 
+          src="https://www.youtube.com/embed?listType=playlist&list=${listId}&autoplay=1" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowfullscreen>
+        </iframe>`;
+    }
+
+    // ---------------- Live Stream Logic ----------------
+    function playLiveStream(url) {
+      if (url.includes('.m3u8')) {
+        playerContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width: 100%; height: 100%; background: #000;"></video>`;
+        const video = document.getElementById('hlsVideo');
+        
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          hls.loadSource(url);
+          hls.attachMedia(video);
+          hls.on(Hls.Events.MANIFEST_PARSED, function() {
+            video.play();
+          });
+        } 
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          video.src = url;
+          video.addEventListener('loadedmetadata', function() {
+            video.play();
+          });
+        }
+      } else {
+        playerContainer.innerHTML = `
+          <iframe 
+            src="${url}" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+          </iframe>`;
+      }
+    }
+
+    function checkStreamTime(url, openHour, openMinute) {
+      playLiveStream(url);
+    }
+
+    // ---------------- Cinema Mode ----------------
+    const cinemaToggle = document.getElementById('cinemaToggle');
+    cinemaToggle.addEventListener('click', () => {
+      document.body.classList.toggle('cinema-mode');
+      cinemaToggle.classList.toggle('active');
+    });
+
+    // ---------------- Refresh Player ----------------
+    document.getElementById('refreshPlayer').addEventListener('click', () => {
+      const current = playerContainer.innerHTML;
+      playerContainer.innerHTML = "";
+      setTimeout(() => { playerContainer.innerHTML = current; }, 100);
+    });
+
+    // ---------------- History System ----------------
+    function loadHistory() {
+      const stored = JSON.parse(localStorage.getItem('auraHistory')) || [];
+      if(stored.length > 0) {
+        historyContainer.style.display = 'block';
+        historyList.innerHTML = stored.map(item => `
+          <div class="history-item" onclick="${item.type === 'video' ? `loadVideo('${item.id}')` : `loadPlaylist('${item.id}')`}">
+            <i class="fa-solid fa-${item.type === 'video' ? 'play' : 'list'}"></i>
+            <div class="history-text">${item.name}</div>
+          </div>
+        `).join('');
+      } else {
+        historyContainer.style.display = 'none';
+      }
+    }
+
+    function addToHistory(name, id, type) {
+      let stored = JSON.parse(localStorage.getItem('auraHistory')) || [];
+      stored = stored.filter(item => item.id !== id);
+      stored.unshift({ name, id, type });
+      if(stored.length > 5) stored.pop();
+      localStorage.setItem('auraHistory', JSON.stringify(stored));
+      loadHistory();
+    }
+
+    function clearHistory() {
+      localStorage.removeItem('auraHistory');
+      loadHistory();
+    }
+
+    loadHistory();
+
+    // ---------------- Live Match Visibility Logic ----------------
+    function manageMatchVisibility() {
+      const now = new Date();
+      
+      // Setup window: July 8th, 2026 at 17:30 to July 9th, 2026 at 23:59:59 (Month index 6 = July)
+      const startTime = new Date(2026, 6, 8, 17, 30, 0).getTime();
+      const endTime = new Date(2026, 6, 9, 23, 59, 59).getTime();
+      
+      const franceMatchCard = document.getElementById('franceMoroccoMatch');
+      
+      if (franceMatchCard) {
+        if (now.getTime() >= startTime && now.getTime() <= endTime) {
+          franceMatchCard.style.display = 'flex';
+        } else {
+          franceMatchCard.style.display = 'none';
+        }
+      }
+    }
+    
+    manageMatchVisibility();
+    setInterval(manageMatchVisibility, 60000);
+
+  </script>
+</body>
+</html>
