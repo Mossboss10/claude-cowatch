@@ -118,6 +118,7 @@
       border-radius: 50px;
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(10px);
+      align-items: center; /* Ensures the bug button aligns with the tabs */
     }
 
     .tab-btn {
@@ -145,6 +146,22 @@
     .tab-btn:hover:not(.active) {
       color: var(--text-main);
       background: var(--hover-bg);
+    }
+
+    /* ---------------- Bug Button ---------------- */
+    .bug-button {
+      background: #FF9932;
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.2s ease;
+    }
+
+    .bug-button:hover {
+      opacity: 0.85;
     }
 
     /* ---------------- Input Forms & Warnings ---------------- */
@@ -551,6 +568,10 @@
     <button class="tab-btn" data-tab="live">
       <i class="fa-solid fa-satellite-dish"></i> Live
     </button>
+    
+    <button onclick="reportBug()" class="bug-button">
+      🐛 Report Bug
+    </button>
   </div>
 
   <div class="input-wrapper tab-content" id="video-tab">
@@ -832,6 +853,13 @@
     manageMatchVisibility();
     setInterval(manageMatchVisibility, 60000);
 
+    // ---------------- ADDED: Bug Report Function ----------------
+    function reportBug() {
+      window.open(
+        "https://docs.google.com/forms/d/e/1FAIpQLSdLiRY-emj0eq7KrdY8ekh2E-TSA57DHfoQyE1ow8QywOsQyQ/viewform?usp=header",
+        "_blank"
+      );
+    }
   </script>
 </body>
 </html>
