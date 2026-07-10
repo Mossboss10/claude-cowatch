@@ -279,11 +279,15 @@
       transform: translateY(-2px);
     }
 
+    .match-info {
+      display: flex;
+      flex-direction: column;
+    }
+
     .match-info .match-teams {
       font-size: 1.3rem;
       font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 5px;
     }
 
     .match-info .match-teams .vs {
@@ -294,30 +298,43 @@
     }
 
     .match-info .match-stage {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+      font-size: 0.9rem;
+      color: #3b525e;
       text-transform: uppercase;
       letter-spacing: 1px;
+      font-weight: 700;
+      margin-top: 6px;
     }
 
     .match-status {
       text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .match-status .match-day {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gradient-alt); /* Yellow / Orange text style */
     }
 
     .match-status .match-time {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       font-weight: 700;
-      color: var(--gradient-alt);
+      color: var(--text-main);
     }
 
-    .match-status .stream-time {
+    .match-status .open-badge {
       font-size: 0.85rem;
       color: var(--text-muted);
       margin-top: 4px;
-      background: rgba(17, 76, 90, 0.05);
-      padding: 4px 8px;
-      border-radius: 6px;
+      background: rgba(17, 76, 90, 0.08);
+      padding: 4px 12px;
+      border-radius: 8px;
       display: inline-block;
+      font-weight: 500;
     }
 
     /* ---------------- Player Container ---------------- */
@@ -616,22 +633,24 @@
       <div class="match-card" id="spainBelgiumMatch" data-stream="#" data-type="today" data-open="19:00" data-close="22:30" onclick="handleMatchClick(this)">
         <div class="match-info">
           <div class="match-teams">🇪🇸 Spain <span class="vs">vs</span> 🇧🇪 Belgium</div>
-          <div class="match-stage">Tonight</div>
+          <div class="match-stage">LIVE MATCH</div>
         </div>
         <div class="match-status">
-          <div class="match-time">Live</div>
-          <div class="stream-time">20:00</div>
+          <div class="match-day">Tonight</div>
+          <div class="match-time">20:00</div>
+          <div class="open-badge">Opens 19:00</div>
         </div>
       </div>
 
       <div class="match-card" id="norwayEnglandMatch" data-stream="#" data-type="tomorrow" data-open="21:00" data-close="00:30" onclick="handleMatchClick(this)">
         <div class="match-info">
           <div class="match-teams">🇳🇴 Norway <span class="vs">vs</span> 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</div>
-          <div class="match-stage">Tomorrow Night</div>
+          <div class="match-stage">LIVE MATCH</div>
         </div>
         <div class="match-status">
-          <div class="match-time">Live</div>
-          <div class="stream-time">22:00</div>
+          <div class="match-day">Tomorrow</div>
+          <div class="match-time">22:00</div>
+          <div class="open-badge">Opens 21:00</div>
         </div>
       </div>
 
