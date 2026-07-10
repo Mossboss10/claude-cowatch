@@ -152,7 +152,7 @@
     .bug-bar-container {
       margin-top: 15px;
       width: 100%;
-      max-width: 700px;
+      max-width: 700px; /* Matches the exact width of your inputs/history containers */
       display: flex;
       justify-content: center;
       opacity: 0;
@@ -271,7 +271,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      display: none; /* Handled by manageMatchVisibility function */
+      display: none; /* Initially handled by visibility function */
     }
 
     .match-card:hover {
@@ -614,25 +614,14 @@
 
     <div class="live-matches">
       
-      <div class="match-card" id="spainBelgiumMatch" data-stream="#" data-type="today" data-open="19:00" data-close="22:30" onclick="handleMatchClick(this)">
+      <div class="match-card" id="franceMoroccoMatch" onclick="checkStreamTime('https://sportspass.site/soccer/fifa2026.html', 20, 0)">
         <div class="match-info">
-          <div class="match-teams">🇪🇸 Spain <span class="vs">vs</span> 🇧🇪 Belgium</div>
-          <div class="match-stage">Tonight</div>
+          <div class="match-teams">🇫🇷 France <span class="vs">vs</span> 🇲🇦 Morocco</div>
+          <div class="match-stage">Live Match</div>
         </div>
         <div class="match-status">
           <div class="match-time">Live</div>
-          <div class="stream-time">20:00</div>
-        </div>
-      </div>
-
-      <div class="match-card" id="norwayEnglandMatch" data-stream="#" data-type="tomorrow" data-open="21:00" data-close="00:30" onclick="handleMatchClick(this)">
-        <div class="match-info">
-          <div class="match-teams">🇳🇴 Norway <span class="vs">vs</span> 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</div>
-          <div class="match-stage">Tomorrow Night</div>
-        </div>
-        <div class="match-status">
-          <div class="match-time">Live</div>
-          <div class="stream-time">22:00</div>
+          <div class="stream-time">21:00</div>
         </div>
       </div>
 
@@ -662,7 +651,7 @@
 
   <div class="bug-bar-container">
     <button onclick="reportBug()" class="bug-button">
-      Locate 🐛 Report Bug
+      🐛 Report Bug
     </button>
   </div>
 
@@ -705,6 +694,7 @@
         });
         document.getElementById(`${btn.dataset.tab}-tab`).style.display = "block";
 
+        // Check ToS when user clicks the live tab
         if(btn.dataset.tab === 'live') {
           checkToS();
         }
@@ -788,11 +778,6 @@
 
     // ---------------- Live Stream Logic ----------------
     function playLiveStream(url) {
-      if (url === "#" || !url) {
-        alert("Stream link has not been updated yet.");
-        return;
-      }
-
       if (url.includes('.m3u8')) {
         playerContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width: 100%; height: 100%; background: #000;"></video>`;
         const video = document.getElementById('hlsVideo');
@@ -824,8 +809,7 @@
       }
     }
 
-    function handleMatchClick(element) {
-      const url = element.getAttribute('data-stream');
+    function checkStreamTime(url, openHour, openMinute) {
       playLiveStream(url);
     }
 
@@ -875,64 +859,17 @@
 
     loadHistory();
 
-    // ---------------- Dynamic Live Match Window Control ----------------
+    // ---------------- Live Match Visibility Logic ----------------
     function manageMatchVisibility() {
-      const now = new Date();
+      const franceMatchCard = document.getElementById('franceMoroccoMatch');
       
-      // Calculate minutes since midnight today to run straightforward time math
-      const currentMinutesToday = (now.getHours() * 60) + now.getMinutes();
-
-      const cards = document.querySelectorAll('.match-card');
-      cards.forEach(card => {
-        const matchType = card.getAttribute('data-type'); // 'today' or 'tomorrow'
-        const openStr = card.getAttribute('data-open');   // e.g. "19:00"
-        const closeStr = card.getAttribute('data-close'); // e.g. "22:30" or "00:30"
-
-        const [openH, openM] = openStr.split(':').map(Number);
-        const [closeH, closeM] = closeStr.split(':').map(Number);
-
-        const openMinutes = (openH * 60) + openM;
-        let closeMinutes = (closeH * 60) + closeM;
-
-        let shouldShow = false;
-
-        if (matchType === 'today') {
-          // If closing time carries over midnight (e.g., 00:30)
-          if (closeMinutes < openMinutes) {
-            if (currentMinutesToday >= openMinutes || currentMinutesToday < closeMinutes) {
-              shouldShow = true;
-            }
-          } else {
-            if (currentMinutesToday >= openMinutes && currentMinutesToday < closeMinutes) {
-              shouldShow = true;
-            }
-          }
-        } 
-        else if (matchType === 'tomorrow') {
-          // Norway vs England: Opens tomorrow night at 21:00 (1 hour before 22:00 KO)
-          // For simplicity, we assume this code tracks the dynamic state relative to match setup.
-          // Adjust logic if you need absolute calendar date boundaries.
-          if (closeMinutes < openMinutes) {
-            if (currentMinutesToday >= openMinutes || currentMinutesToday < closeMinutes) {
-              shouldShow = true;
-            }
-          } else {
-            if (currentMinutesToday >= openMinutes && currentMinutesToday < closeMinutes) {
-              shouldShow = true;
-            }
-          }
-        }
-
-        if (shouldShow) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+      if (franceMatchCard) {
+        franceMatchCard.style.display = 'flex'; // Always visible
+      }
     }
     
     manageMatchVisibility();
-    setInterval(manageMatchVisibility, 30000); // Check window intervals every 30 seconds
+    setInterval(manageMatchVisibility, 60000);
 
     // ---------------- Bug Report Function ----------------
     function reportBug() {
