@@ -280,6 +280,13 @@
       transform: translateY(-2px);
     }
 
+    /* Active Shading for Selected Match Card */
+    .match-card.active-stream {
+      background: rgba(17, 76, 90, 0.15) !important;
+      border-color: var(--secondary) !important;
+      box-shadow: inset 0 0 12px rgba(17, 76, 90, 0.1);
+    }
+
     .match-info {
       display: flex;
       flex-direction: column;
@@ -338,22 +345,15 @@
       font-weight: 500;
     }
 
-    /* ---------------- Layout & Sidebar Widget ---------------- */
+    /* ---------------- Centered Layout Engine ---------------- */
     .player-section-layout {
+      position: relative;
+      width: 100%;
+      max-width: 1000px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      width: 100%;
-      max-width: 1300px;
       align-items: center;
-    }
-
-    @media(min-width: 1000px) {
-      .player-section-layout {
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: center;
-      }
+      gap: 20px;
     }
 
     .shortcuts-widget {
@@ -372,10 +372,13 @@
       gap: 12px;
     }
 
-    @media(min-width: 1000px) {
+    /* Desktop Viewport Floating Sidebar Adjustment to prevent off-centering */
+    @media(min-width: 1320px) {
       .shortcuts-widget {
-        max-width: 260px;
-        flex-shrink: 0;
+        position: absolute;
+        left: calc(100% + 25px);
+        top: 0;
+        width: 260px;
       }
     }
 
@@ -419,10 +422,10 @@
       box-shadow: 0 20px 50px rgba(17, 43, 54, 0.15);
       position: relative;
       animation: popIn 0.5s ease;
-      flex: 1;
+      width: 100%;
     }
 
-    /* Clear Shield Click Blocker layer */
+    /* Completely transparent blocker engine shield layer */
     .player-overlay {
       position: absolute;
       top: 0;
@@ -430,7 +433,7 @@
       width: 100%;
       height: 100%;
       z-index: 99;
-      background: rgba(0, 0, 0, 0);
+      background: rgba(0, 0, 0, 0); 
       cursor: default;
     }
 
@@ -736,7 +739,7 @@
         </div>
       </div>
 
-      <div class="match-card" id="sinnerDjokovicMatch" data-stream="https://dlhd.st/stream/stream-44.php" data-type="today" data-open="14:30" data-close="19:30" onclick="handleMatchClick(this)">
+      <div class="match-card" id="sinnerDjokovicMatch" data-stream="https://dlhd.st/stream/stream-44.php" data-type="today" data-open="15:00" data-close="21:00" onclick="handleMatchClick(this)">
         <div class="match-info">
           <div class="match-teams">🇮🇹 J. Sinner <span class="vs">vs</span> 🇷🇸 N. Djokovic</div>
           <div class="match-stage">LIVE MATCH</div>
@@ -744,7 +747,7 @@
         <div class="match-status">
           <div class="match-day">Today</div>
           <div class="match-time">16:00</div>
-          <div class="open-badge">Opens 14:30</div>
+          <div class="open-badge">Opens 15:00</div>
         </div>
       </div>
       
@@ -896,6 +899,8 @@
       }
 
       if (videoId) {
+        // Clear card highlights
+        document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
         loadVideo(videoId, startTime);
         addToHistory("Video: " + videoId, videoId, 'video');
       } else {
@@ -927,6 +932,7 @@
       }
 
       if (listId) {
+        document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
         loadPlaylist(listId);
         addToHistory("Playlist: " + listId, listId, 'playlist');
       } else {
@@ -1010,6 +1016,10 @@
       }
 
       if (windowActive) {
+        // Toggle Active Shading Class on Clicked Sports Match Cards
+        document.querySelectorAll(".match-card").forEach(card => card.classList.remove("active-stream"));
+        element.classList.add("active-stream");
+
         const url = element.getAttribute('data-stream');
         playLiveStream(url);
       } else {
