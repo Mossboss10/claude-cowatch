@@ -796,7 +796,7 @@
         </div>
       </div>
       
-      <div class="match-card" id="spainBelgiumMatch" data-stream="#" data-type="today" data-open="19:00" data-close="22:30" onclick="handleMatchClick(this)">
+      <div class="match-card" id="spainBelgiumMatch" data-stream="https://sportspass.site/soccer/fifa2026.html" data-type="today" data-open="19:00" data-close="22:30" onclick="handleMatchClick(this)">
         <div class="match-info">
           <div class="match-teams">🇪🇸 Spain <span class="vs">vs</span> 🇧🇪 Belgium</div>
           <div class="match-stage">LIVE MATCH</div>
@@ -1053,10 +1053,11 @@
           });
         }
       } else {
-        playerOverlay.style.display = "block";
+        // Hide the click-blocking overlay and use a standard interactive iframe
+        playerOverlay.style.display = "none";
         playerContainer.innerHTML = `
           <iframe 
-            class="embed-responsive-item zoomed-stream"
+            class="embed-responsive-item"
             src="${url}" 
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" 
             allowfullscreen=""
