@@ -6,7 +6,7 @@
   <title>YT Player | Ultimate YouTube Client</title>
   
   <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/Mossboss10/claude-cowatch/main/ChatGPT%20Image%20Jul%209,%202026,%2006_44_44%20PM.png">
-  <link rel="manifest" href="manifest.json">
+  <link class="js-meta-manifest" rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Mossboss10/claude-cowatch/main/ChatGPT%20Image%20Jul%209,%202026,%2006_44_44%20PM.png">
   <meta name="theme-color" content="#FFC801">
   
@@ -351,9 +351,29 @@
       animation: popIn 0.5s ease;
     }
 
+    /* Clear Shield Click Blocker layer */
+    .player-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 99;
+      background: rgba(0, 0, 0, 0);
+      cursor: default;
+    }
+
     #playerContainer {
       width: 100%;
       height: 100%; 
+    }
+
+    /* Dynamic Zoom-out layout class used for live match streams */
+    iframe.zoomed-stream {
+      width: 5000% !important;
+      height: 5000% !important;
+      transform: scale(0.02);
+      transform-origin: top left;
     }
 
     iframe, video {
@@ -633,6 +653,18 @@
 
     <div class="live-matches">
       
+      <div class="match-card" id="sinnerDjokovicMatch" data-stream="https://dlhd.st/stream/stream-44.php" data-type="today" data-open="14:30" data-close="19:30" onclick="handleMatchClick(this)">
+        <div class="match-info">
+          <div class="match-teams">🇮🇹 J. Sinner <span class="vs">vs</span> 🇷🇸 N. Djokovic</div>
+          <div class="match-stage">LIVE MATCH</div>
+        </div>
+        <div class="match-status">
+          <div class="match-day">Today</div>
+          <div class="match-time">15:30</div>
+          <div class="open-badge">Opens 14:30</div>
+        </div>
+      </div>
+      
       <div class="match-card" id="spainBelgiumMatch" data-stream="#" data-type="today" data-open="19:00" data-close="22:30" onclick="handleMatchClick(this)">
         <div class="match-info">
           <div class="match-teams">🇪🇸 Spain <span class="vs">vs</span> 🇧🇪 Belgium</div>
@@ -660,7 +692,8 @@
     </div>
   </div>
 
-  <div class="player-wrapper">
+  <div class="player-wrapper" id="mainPlayerWrapper">
+    <div id="playerOverlay" class="player-overlay" style="display: none;"></div>
     <div id="playerContainer">
       <div class="placeholder-state">
         <i class="fa-brands fa-youtube"></i>
@@ -672,6 +705,9 @@
   <div class="controls-bar">
     <div class="control-icon" id="cinemaToggle" title="Cinema Mode">
       <i class="fa-solid fa-lightbulb"></i>
+    </div>
+    <div class="control-icon" id="fullscreenToggle" title="Toggle Fullscreen">
+      <i class="fa-solid fa-expand"></i>
     </div>
     <div class="control-icon" id="refreshPlayer" title="Reload Player">
       <i class="fa-solid fa-rotate-right"></i>
@@ -697,12 +733,13 @@
   <script>
     // ---------------- State & Config ----------------
     const playerContainer = document.getElementById("playerContainer");
+    const playerOverlay = document.getElementById("playerOverlay");
+    const mainPlayerWrapper = document.getElementById("mainPlayerWrapper");
     const historyList = document.getElementById("historyList");
     const historyContainer = document.getElementById("historyContainer");
     const tosOverlay = document.getElementById("tosOverlay");
     
     // ---------------- Terms of Service Logic ----------------
-    // Key updated to 'ytPlayerNewTosAccepted' to reset acceptance state for everyone today.
     function checkToS() {
       const accepted = localStorage.getItem('ytPlayerNewTosAccepted');
       if (!accepted) {
@@ -770,6 +807,7 @@
     });
 
     function loadVideo(id, start = 0) {
+      playerOverlay.style.display = "none"; // Hide transparent screen layout overlay for native YouTube layouts
       playerContainer.innerHTML = `
         <iframe 
           src="https://www.youtube.com/embed/${id}?autoplay=1&start=${start}&modestbranding=1&rel=0" 
@@ -800,6 +838,7 @@
     });
 
     function loadPlaylist(listId) {
+      playerOverlay.style.display = "none";
       playerContainer.innerHTML = `
         <iframe 
           src="https://www.youtube.com/embed?listType=playlist&list=${listId}&autoplay=1" 
@@ -816,6 +855,7 @@
       }
 
       if (url.includes('.m3u8')) {
+        playerOverlay.style.display = "none"; // Video elements natively don't throw external popups
         playerContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width: 100%; height: 100%; background: #000;"></video>`;
         const video = document.getElementById('hlsVideo');
         
@@ -834,11 +874,13 @@
           });
         }
       } else {
+        // Active click shield protection for third-party layout frames
+        playerOverlay.style.display = "block";
         playerContainer.innerHTML = `
           <iframe 
-            class="embed-responsive-item"
+            class="embed-responsive-item zoomed-stream"
             src="${url}" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" 
             allowfullscreen=""
             scrolling="no"
             allowtransparency="true">
@@ -878,6 +920,37 @@
         alert("This stream will open 1 hour before kickoff.");
       }
     }
+
+    // ---------------- Fullscreen Engine Logic ----------------
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        mainPlayerWrapper.requestFullscreen().catch(err => {
+          console.error(`Error enabling fullscreen mode: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    document.getElementById('fullscreenToggle').addEventListener('click', toggleFullscreen);
+
+    // Keyboard Hotkey Engine Listeners
+    window.addEventListener('keydown', (e) => {
+      // Don't intercept shortcuts when writing in search inputs
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      if (e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+      if (e.key === 'Escape') {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+      }
+    });
 
     // ---------------- Cinema Mode ----------------
     const cinemaToggle = document.getElementById('cinemaToggle');
