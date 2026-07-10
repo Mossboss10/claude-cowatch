@@ -69,7 +69,8 @@
     body.cinema-mode .ad-disclaimer,
     body.cinema-mode .bug-bar-container,
     body.cinema-mode .shortcuts-widget,
-    body.cinema-mode .audio-help-widget {
+    body.cinema-mode .audio-help-widget,
+    body.cinema-mode .tutorial-widget {
       opacity: 0.1;
       filter: blur(2px);
       pointer-events: none;
@@ -357,8 +358,8 @@
       gap: 20px;
     }
 
-    /* Widgets (Shortcuts & Audio Help) */
-    .shortcuts-widget, .audio-help-widget {
+    /* Widgets (Shortcuts, Audio Help, Tutorial) */
+    .shortcuts-widget, .audio-help-widget, .tutorial-widget {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(12px);
@@ -374,11 +375,11 @@
       gap: 12px;
     }
     
-    .audio-help-widget {
+    .audio-help-widget, .tutorial-widget {
       display: none; /* Hidden initially, shown via JS on Live tab */
     }
 
-    .audio-help-widget p, .audio-help-widget ol {
+    .audio-help-widget p, .audio-help-widget ol, .tutorial-widget p {
       font-size: 0.9rem;
       color: var(--text-main);
     }
@@ -390,6 +391,14 @@
     
     .audio-help-widget li {
       margin-bottom: 6px;
+    }
+
+    .tutorial-widget video {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      margin-top: 5px;
+      background: var(--secondary);
     }
 
     /* Desktop Viewport Floating Sidebar Adjustment */
@@ -406,9 +415,15 @@
         top: 150px; /* Stacks nicely under the shortcuts */
         width: 260px;
       }
+      .tutorial-widget {
+        position: absolute;
+        left: calc(100% + 25px);
+        top: 380px; /* Stacks nicely under the audio help */
+        width: 260px;
+      }
     }
 
-    .shortcuts-widget h4, .audio-help-widget h4 {
+    .shortcuts-widget h4, .audio-help-widget h4, .tutorial-widget h4 {
       font-family: 'Space Grotesk', sans-serif;
       color: var(--secondary);
       font-size: 1.1rem;
@@ -419,8 +434,8 @@
       padding-bottom: 8px;
     }
     
-    .audio-help-widget h4 {
-      color: var(--gradient-alt); /* Makes the audio help title pop out */
+    .audio-help-widget h4, .tutorial-widget h4 {
+      color: var(--gradient-alt); 
     }
 
     .shortcut-row {
@@ -840,6 +855,12 @@
         <li>The protective shield will turn back on after 3 seconds.</li>
       </ol>
     </div>
+
+    <div class="tutorial-widget" id="tutorialWidget">
+      <h4><i class="fa-solid fa-circle-play"></i> Still not working?</h4>
+      <p>Watch this quick tutorial to see how it's done.</p>
+      <video src="Recording 2026-07-10 165203.mp4" controls></video>
+    </div>
   </div>
 
   <div class="controls-bar">
@@ -899,7 +920,8 @@
     // ---------------- Tab Switching ----------------
     const tabButtons = document.querySelectorAll(".tab-btn");
     const soundToggleBtn = document.getElementById("soundToggle");
-    const audioHelpWidget = document.getElementById("audioHelpWidget"); // Get Audio Widget
+    const audioHelpWidget = document.getElementById("audioHelpWidget"); 
+    const tutorialWidget = document.getElementById("tutorialWidget"); // Get Tutorial Widget
 
     tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
@@ -913,11 +935,13 @@
 
         if(btn.dataset.tab === 'live') {
           checkToS();
-          soundToggleBtn.style.display = "flex";  // Show sound bypass button
-          audioHelpWidget.style.display = "flex"; // Show Audio Instructions widget
+          soundToggleBtn.style.display = "flex";  
+          audioHelpWidget.style.display = "flex"; 
+          tutorialWidget.style.display = "flex";  // Show Tutorial Widget
         } else {
-          soundToggleBtn.style.display = "none";  // Hide on other tabs
-          audioHelpWidget.style.display = "none"; // Hide on other tabs
+          soundToggleBtn.style.display = "none";  
+          audioHelpWidget.style.display = "none"; 
+          tutorialWidget.style.display = "none";  // Hide Tutorial Widget
         }
       });
     });
