@@ -189,6 +189,7 @@
       width: 100%;
       max-width: 700px;
       margin-bottom: 25px;
+      display: none;
     }
 
     .ad-disclaimer {
@@ -282,7 +283,6 @@
       transform: translateY(-2px);
     }
 
-    /* Active Shading for Selected Match Card */
     .match-card.active-stream {
       background: rgba(17, 76, 90, 0.15) !important;
       border-color: var(--secondary) !important;
@@ -358,7 +358,6 @@
       gap: 20px;
     }
 
-    /* Widgets (Shortcuts, Audio Help, Tutorial) */
     .shortcuts-widget, .audio-help-widget, .tutorial-widget {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
@@ -376,7 +375,7 @@
     }
     
     .audio-help-widget, .tutorial-widget {
-      display: none; /* Hidden initially, shown via JS on Live tab */
+      display: flex;
     }
 
     .audio-help-widget p, .audio-help-widget ol, .tutorial-widget p {
@@ -401,7 +400,6 @@
       background: var(--secondary);
     }
 
-    /* Desktop Viewport Floating Sidebar Adjustment */
     @media(min-width: 1320px) {
       .shortcuts-widget {
         position: absolute;
@@ -412,13 +410,13 @@
       .audio-help-widget {
         position: absolute;
         left: calc(100% + 25px);
-        top: 150px; /* Stacks nicely under the shortcuts */
+        top: 150px;
         width: 260px;
       }
       .tutorial-widget {
         position: absolute;
         left: calc(100% + 25px);
-        top: 380px; /* Stacks nicely under the audio help */
+        top: 380px;
         width: 260px;
       }
     }
@@ -467,10 +465,8 @@
       box-shadow: 0 20px 50px rgba(17, 43, 54, 0.15);
       position: relative;
       animation: popIn 0.5s ease;
-      width: 100%;
     }
 
-    /* Completely transparent blocker engine shield layer */
     .player-overlay {
       position: absolute;
       top: 0;
@@ -487,7 +483,6 @@
       height: 100%; 
     }
 
-    /* Mega 0.2% Zoomed-out effect applied directly to iframes */
     iframe.zoomed-stream {
       width: 50000% !important;
       height: 50000% !important;
@@ -610,17 +605,18 @@
       height: 100%;
       background: rgba(23, 43, 54, 0.8);
       backdrop-filter: blur(8px);
-      display: none;
+      display: flex;
       justify-content: center;
       align-items: center;
       z-index: 9999;
       opacity: 0;
       transition: opacity 0.3s ease;
+      pointer-events: none;
     }
 
     .modal-overlay.show {
-      display: flex;
       opacity: 1;
+      pointer-events: auto;
     }
 
     .tos-modal {
@@ -690,7 +686,6 @@
       transform: translateY(-2px);
     }
 
-    /* ---------------- Animations ---------------- */
     @keyframes popIn {
       0% { transform: scale(0.95); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
@@ -707,7 +702,7 @@
 </head>
 <body>
 
-  <div class="modal-overlay" id="tosOverlay">
+  <div class="modal-overlay show" id="tosOverlay">
     <div class="tos-modal">
       <h2><i class="fa-solid fa-file-contract"></i> Terms of Service</h2>
       <div class="tos-content">
@@ -721,490 +716,203 @@
         
         <h3>3. Limitation of Liability</h3>
         <p>The service is provided on an "AS IS" and "AS AVAILABLE" basis. We make no guarantees regarding the availability, quality, legality, safety, or suitability of any third-party stream or website.</p>
-        <p>To the fullest extent permitted by applicable law, YT Player shall not be liable for any loss, damage, offensive material, inappropriate advertising, malware, redirects, or any other content encountered through third-party providers. Your decision to access or watch any live stream is made entirely at your own risk.</p>
+        <p>To the fullest extent permitted by applicable law, YT Player shall not be liable for any loss, damage, offensive material, inappropriate advertising, malware, redirects, or any other issues arising from third-party streams.</p>
       </div>
-      <button class="tos-btn" onclick="acceptToS()">I Understand & Accept</button>
+      <button class="tos-btn" id="acceptTosBtn">I Accept & Continue</button>
     </div>
   </div>
 
   <div class="logo-area">
-    <h1>YT <span style="font-weight:300">PLAYER</span></h1>
-    <span class="badge">v3.8 Stream Hub</span>
+    <h1>YT Player</h1>
+    <span class="badge">Ultimate Client</span>
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="video">
-      <i class="fa-solid fa-play"></i> Video
-    </button>
-    <button class="tab-btn" data-tab="channel">
-      <i class="fa-solid fa-list-ul"></i> Channel
-    </button>
-    <button class="tab-btn" data-tab="live">
-      <i class="fa-solid fa-satellite-dish"></i> Live
-    </button>
+    <button class="tab-btn active" id="liveTabBtn"><i class="fa-solid fa-satellite-dish"></i> Live Matches</button>
+    <button class="tab-btn" id="customTabBtn"><i class="fa-solid fa-link"></i> Custom Stream</button>
   </div>
 
-  <div class="input-wrapper tab-content" id="video-tab">
-    <form id="videoForm">
-      <input type="text" id="videoInput" placeholder="Paste YouTube Link..." autocomplete="off"/>
-      <button type="submit" class="action-btn"><i class="fa-solid fa-bolt"></i></button>
-    </form>
-  </div>
-
-  <div class="input-wrapper tab-content" id="channel-tab" style="display:none;">
-    <form id="channelForm">
-      <input type="text" id="channelInput" placeholder="Channel Link or Playlist ID" autocomplete="off"/>
-      <button type="submit" class="action-btn"><i class="fa-solid fa-tower-broadcast"></i></button>
-    </form>
-    <div style="margin-top:10px; font-size:0.85rem; color:var(--text-muted); text-align:center;">
-      <i class="fa-solid fa-circle-info"></i> Supports <strong>/channel/UC...</strong> or <strong>Playlist URL</strong>
-    </div>
-  </div>
-
-  <div class="input-wrapper tab-content" id="live-tab" style="display:none;">
-    
+  <div class="input-wrapper" id="customInputWrapper">
     <div class="ad-disclaimer">
       <i class="fa-solid fa-triangle-exclamation"></i>
-      <div>
-        <strong>Ad Warning:</strong> When you click play on a stream, it may try to open an advertisement in a new website or tab. Just close the new window and come back to this page to watch your match.
-      </div>
+      <div>Custom streams run directly through the client window layer. Ensure you use valid HLS (.m3u8) or direct YouTube links.</div>
     </div>
-
-    <div class="live-matches">
-      
-      <div class="match-card" id="scottishOpenMatch" data-stream="https://dlhd.st/embed/stream-70.php" data-type="today" data-open="15:00" data-close="23:59" onclick="handleMatchClick(this)">
-        <div class="match-info">
-          <div class="match-teams">⛳ PGA Tour Golf Genesis Scottish Open, First Round</div>
-          <div class="match-stage">LIVE BROADCAST</div>
-        </div>
-        <div class="match-status">
-          <div class="match-day">Today</div>
-          <div class="match-time">16:00</div>
-          <div class="open-badge">Opens 15:00</div>
-        </div>
-      </div>
-
-      <div class="match-card" id="sinnerDjokovicMatch" data-stream="https://dlhd.st/stream/stream-44.php" data-type="today" data-open="15:00" data-close="21:00" onclick="handleMatchClick(this)">
-        <div class="match-info">
-          <div class="match-teams">🇮🇹 J. Sinner <span class="vs">vs</span> 🇷🇸 N. Djokovic</div>
-          <div class="match-stage">LIVE MATCH</div>
-        </div>
-        <div class="match-status">
-          <div class="match-day">Today</div>
-          <div class="match-time">16:00</div>
-          <div class="open-badge">Opens 15:00</div>
-        </div>
-      </div>
-      
-      <div class="match-card" id="spainBelgiumMatch" data-stream="https://sportspass.site/soccer/fifa2026.html" data-type="today" data-open="19:00" data-close="22:30" onclick="handleMatchClick(this)">
-        <div class="match-info">
-          <div class="match-teams">🇪🇸 Spain <span class="vs">vs</span> 🇧🇪 Belgium</div>
-          <div class="match-stage">LIVE MATCH</div>
-        </div>
-        <div class="match-status">
-          <div class="match-day">Tonight</div>
-          <div class="match-time">20:00</div>
-          <div class="open-badge">Opens 19:00</div>
-        </div>
-      </div>
-
-      <div class="match-card" id="norwayEnglandMatch" data-stream="#" data-type="tomorrow" data-open="21:00" data-close="00:30" onclick="handleMatchClick(this)">
-        <div class="match-info">
-          <div class="match-teams">🇳🇴 Norway <span class="vs">vs</span> 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</div>
-          <div class="match-stage">LIVE MATCH</div>
-        </div>
-        <div class="match-status">
-          <div class="match-day">Tomorrow</div>
-          <div class="match-time">22:00</div>
-          <div class="open-badge">Opens 21:00</div>
-        </div>
-      </div>
-
-    </div>
+    <form id="urlForm" onsubmit="event.preventDefault();">
+      <input type="text" id="streamUrlInput" placeholder="Enter stream, HLS .m3u8, or YouTube URL...">
+      <button type="button" class="action-btn" id="loadStreamBtn">Load</button>
+    </form>
   </div>
 
   <div class="player-section-layout">
-    <div class="player-wrapper" id="mainPlayerWrapper">
-      <div id="playerOverlay" class="player-overlay" style="display: none;"></div>
+    <div class="player-wrapper">
+      <div class="player-overlay" id="playerOverlayLayer"></div>
       <div id="playerContainer">
-        <div class="placeholder-state">
-          <i class="fa-brands fa-youtube"></i>
-          <p>Ready to Stream</p>
+        <div class="placeholder-state" id="playerPlaceholder">
+          <i class="fa-solid fa-circle-play"></i>
+          <p>Select a match card below or load a custom link to launch playback engine.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <div class="control-icon" id="cinemaToggle" title="Toggle Cinema Mode"><i class="fa-solid fa-film"></i></div>
+      <div class="control-icon" id="refreshStream" title="Refresh Stream"><i class="fa-solid fa-rotate-right"></i></div>
+    </div>
+
+    <div class="live-matches" id="liveMatchesSection">
+      <div class="match-card" data-url="">
+        <div class="match-info">
+          <div class="match-teams">England <span class="vs">versus</span> Norway</div>
+          <div class="match-stage">International Live Coverage</div>
+        </div>
+        <div class="match-status">
+          <div class="match-time">08:30</div>
+          <div class="open-badge">Starts at 08:30</div>
+        </div>
+      </div>
+
+      <div class="match-card" data-url="">
+        <div class="match-info">
+          <div class="match-teams">PGA Tour Scottish Open</div>
+          <div class="match-stage">Golf Stream</div>
+        </div>
+        <div class="match-status">
+          <div class="match-time">10:00 - 20:00</div>
+          <div class="open-badge">Open 10:00 - 20:00</div>
         </div>
       </div>
     </div>
 
     <div class="shortcuts-widget">
-      <h4><i class="fa-solid fa-keyboard"></i> Shortcuts</h4>
-      <div class="shortcut-row">
-        <span>Fullscreen</span>
-        <span class="shortcut-key">F</span>
-      </div>
-      <div class="shortcut-row">
-        <span>Exit Layout</span>
-        <span class="shortcut-key">Esc</span>
-      </div>
+      <h4><i class="fa-solid fa-keyboard"></i> Hotkeys</h4>
+      <div class="shortcut-row"><span>Toggle Viewport Limit</span> <span class="shortcut-key">C</span></div>
+      <div class="shortcut-row"><span>Emergency Player Reset</span> <span class="shortcut-key">R</span></div>
     </div>
 
-    <div class="audio-help-widget" id="audioHelpWidget">
-      <h4><i class="fa-solid fa-volume-xmark"></i> Not hearing any audio?</h4>
-      <p>Because the stream is highly zoomed out, the normal unmute button is too small to click.</p>
+    <div class="audio-help-widget">
+      <h4><i class="fa-solid fa-volume-high"></i> Stream Audio Fixing</h4>
       <ol>
-        <li>Click the <strong>Sound <i class="fa-solid fa-volume-high"></i></strong> button below the player.</li>
-        <li>Quickly double-click or tap anywhere on the video player itself.</li>
-        <li>The protective shield will turn back on after 3 seconds.</li>
+        <li>Right-click the center inside the video layer box.</li>
+        <li>Select 'Unmute' or click 'Show Controls' inside the native menu.</li>
       </ol>
     </div>
 
-    <div class="tutorial-widget" id="tutorialWidget">
-      <h4><i class="fa-solid fa-circle-play"></i> Still not working?</h4>
-      <p>Watch this quick tutorial to see how it's done.</p>
-      <video src="Recording 2026-07-10 165203.mp4" controls></video>
+    <div class="tutorial-widget">
+      <h4><i class="fa-solid fa-circle-info"></i> Quick Tutorial</h4>
+      <p>Simply select an active live match card button block from below to mount the viewport array frame context layer.</p>
     </div>
-  </div>
 
-  <div class="controls-bar">
-    <div class="control-icon" id="cinemaToggle" title="Cinema Mode">
-      <i class="fa-solid fa-lightbulb"></i>
+    <div class="history-container" id="historyLogSection">
+      <div class="history-header">
+        <span>Session History Log</span>
+        <span style="cursor:pointer; opacity:0.6;" id="clearHistoryBtn">Clear All</span>
+      </div>
+      <div id="historyItemsWrapper"></div>
     </div>
-    <div class="control-icon" id="fullscreenToggle" title="Toggle Fullscreen">
-      <i class="fa-solid fa-expand"></i>
-    </div>
-    <div class="control-icon" id="refreshPlayer" title="Reload Player">
-      <i class="fa-solid fa-rotate-right"></i>
-    </div>
-    <div class="control-icon" onclick="clearHistory()" title="Clear History">
-      <i class="fa-solid fa-trash"></i>
-    </div>
-    
-    <div class="control-icon" id="soundToggle" title="Unmute Stream" style="display: none;">
-      <i class="fa-solid fa-volume-high"></i>
-    </div>
-  </div>
 
-  <div class="bug-bar-container">
-    <button onclick="reportBug()" class="bug-button">
-      🐛 Report Bug
-    </button>
-  </div>
-
-  <div class="history-container" id="historyContainer">
-    <div class="history-header">
-      <span>Recently Watched</span>
+    <div class="bug-bar-container">
+      <button class="bug-button" id="bugReportBtn"><i class="fa-solid fa-bug"></i> Submit Player Performance Bug Report</button>
     </div>
-    <div id="historyList"></div>
   </div>
 
   <script>
-    // ---------------- State & Config ----------------
-    const playerContainer = document.getElementById("playerContainer");
-    const playerOverlay = document.getElementById("playerOverlay");
-    const mainPlayerWrapper = document.getElementById("mainPlayerWrapper");
-    const historyList = document.getElementById("historyList");
-    const historyContainer = document.getElementById("historyContainer");
-    const tosOverlay = document.getElementById("tosOverlay");
-    
-    // ---------------- Terms of Service Logic ----------------
-    function checkToS() {
-      const accepted = localStorage.getItem('ytPlayerNewTosAccepted');
-      if (!accepted) {
-        tosOverlay.classList.add('show');
-      }
-    }
-
-    function acceptToS() {
-      localStorage.setItem('ytPlayerNewTosAccepted', 'true');
-      tosOverlay.classList.remove('show');
-    }
-    
-    // ---------------- Tab Switching ----------------
-    const tabButtons = document.querySelectorAll(".tab-btn");
-    const soundToggleBtn = document.getElementById("soundToggle");
-    const audioHelpWidget = document.getElementById("audioHelpWidget"); 
-    const tutorialWidget = document.getElementById("tutorialWidget"); // Get Tutorial Widget
-
-    tabButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        tabButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        
-        document.querySelectorAll(".tab-content").forEach(tab => {
-          tab.style.display = "none";
-        });
-        document.getElementById(`${btn.dataset.tab}-tab`).style.display = "block";
-
-        if(btn.dataset.tab === 'live') {
-          checkToS();
-          soundToggleBtn.style.display = "flex";  
-          audioHelpWidget.style.display = "flex"; 
-          tutorialWidget.style.display = "flex";  // Show Tutorial Widget
-        } else {
-          soundToggleBtn.style.display = "none";  
-          audioHelpWidget.style.display = "none"; 
-          tutorialWidget.style.display = "none";  // Hide Tutorial Widget
-        }
-      });
-    });
-
-    // ---------------- Video Logic ----------------
-    document.getElementById("videoForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const input = document.getElementById("videoInput").value.trim();
-      let videoId = "";
-      let startTime = 0;
-
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = input.match(regExp);
-      if (match && match[2].length === 11) {
-        videoId = match[2];
-      } else if (input.length === 11) {
-        videoId = input;
-      }
-
-      const timeMatch = input.match(/[?&]t=([^&]+)/);
-      if(timeMatch) {
-        let t = timeMatch[1];
-        if(t.includes('m') || t.includes('s')) {
-            let m = 0, s = 0;
-            if(t.includes('m')) m = parseInt(t.split('m')[0]);
-            if(t.includes('s')) s = parseInt(t.split('s')[0].split('m').pop());
-            startTime = (m * 60) + s;
-        } else {
-            startTime = parseInt(t);
-        }
-      }
-
-      if (videoId) {
-        // Clear card highlights
-        document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
-        loadVideo(videoId, startTime);
-        addToHistory("Video: " + videoId, videoId, 'video');
-      } else {
-        alert("Invalid YouTube Video Link");
-      }
-    });
-
-    function loadVideo(id, start = 0) {
-      playerOverlay.style.display = "none"; 
-      playerContainer.innerHTML = `
-        <iframe 
-          src="https://www.youtube.com/embed/${id}?autoplay=1&start=${start}&modestbranding=1&rel=0" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen>
-        </iframe>`;
-    }
-
-    // ---------------- Channel/Playlist Logic ----------------
-    document.getElementById("channelForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      const url = document.getElementById("channelInput").value.trim();
-      let listId = "";
-
-      if(url.includes("list=")) {
-        listId = url.split("list=")[1].split("&")[0];
-      } else if (url.includes("/channel/UC")) {
-        const channelId = url.split("/channel/")[1].split(/[/?]/)[0];
-        listId = "UU" + channelId.substring(2);
-      }
-
-      if (listId) {
-        document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
-        loadPlaylist(listId);
-        addToHistory("Playlist: " + listId, listId, 'playlist');
-      } else {
-        alert("Please use a Playlist URL or a 'channel/UC...' URL.");
-      }
-    });
-
-    function loadPlaylist(listId) {
-      playerOverlay.style.display = "none";
-      playerContainer.innerHTML = `
-        <iframe 
-          src="https://www.youtube.com/embed?listType=playlist&list=${listId}&autoplay=1" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowfullscreen>
-        </iframe>`;
-    }
-
-    // ---------------- Live Stream Logic ----------------
-    function playLiveStream(url) {
-      if (url === "#" || !url) {
-        alert("Stream link has not been updated yet.");
-        return;
-      }
-
-      if (url.includes('.m3u8')) {
-        playerOverlay.style.display = "none"; 
-        playerContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width: 100%; height: 100%; background: #000;"></video>`;
-        const video = document.getElementById('hlsVideo');
-        
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play();
-          });
-        } 
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = url;
-          video.addEventListener('loadedmetadata', function() {
-            video.play();
-          });
-        }
-      } else {
-        // Hide the click-blocking overlay and use a standard interactive iframe
-        playerOverlay.style.display = "none";
-        playerContainer.innerHTML = `
-          <iframe 
-            class="embed-responsive-item"
-            src="${url}" 
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" 
-            allowfullscreen=""
-            scrolling="no"
-            allowtransparency="true">
-          </iframe>`;
-      }
-    }
-
-    function handleMatchClick(element) {
-      const now = new Date();
-      const currentMinutesToday = (now.getHours() * 60) + now.getMinutes();
-
-      const openStr = element.getAttribute('data-open');
-      const closeStr = element.getAttribute('data-close');
-
-      const [openH, openM] = openStr.split(':').map(Number);
-      const [closeH, closeM] = closeStr.split(':').map(Number);
-
-      const openMinutes = (openH * 60) + openM;
-      let closeMinutes = (closeH * 60) + closeM;
-
-      let windowActive = false;
-
-      if (closeMinutes < openMinutes) {
-        if (currentMinutesToday >= openMinutes || currentMinutesToday < closeMinutes) {
-          windowActive = true;
-        }
-      } else {
-        if (currentMinutesToday >= openMinutes && currentMinutesToday < closeMinutes) {
-          windowActive = true;
-        }
-      }
-
-      if (windowActive) {
-        // Toggle Active Shading Class on Clicked Sports Match Cards
-        document.querySelectorAll(".match-card").forEach(card => card.classList.remove("active-stream"));
-        element.classList.add("active-stream");
-
-        const url = element.getAttribute('data-stream');
-        playLiveStream(url);
-      } else {
-        alert("This stream will open 1 hour before kickoff.");
-      }
-    }
-
-    // ---------------- Fullscreen Engine Logic ----------------
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        mainPlayerWrapper.requestFullscreen().catch(err => {
-          console.error(`Error enabling fullscreen mode: ${err.message}`);
-        });
-      } else {
-        document.exitFullscreen();
-      }
-    }
-
-    document.getElementById('fullscreenToggle').addEventListener('click', toggleFullscreen);
-
-    window.addEventListener('keydown', (e) => {
-      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
-        return;
-      }
-      
-      if (e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        toggleFullscreen();
-      }
-      if (e.key === 'Escape') {
-        if (document.fullscreenElement) {
-          document.exitFullscreen();
-        }
-      }
-    });
-
-    // ---------------- Sound Bypass Engine ----------------
-    document.getElementById('soundToggle').addEventListener('click', function() {
-      const overlay = document.getElementById('playerOverlay');
-      
-      // Temporarily disable the invisible shield
-      overlay.style.pointerEvents = 'none';
-      
-      // Give visual feedback to the user so they know to click the video
-      this.classList.add('active');
-      this.style.color = '#FF9932'; 
-      
-      // Re-enable the shield after 3 seconds (enough time for the user to click the video to unmute)
-      setTimeout(() => {
-        overlay.style.pointerEvents = 'auto';
-        this.classList.remove('active');
-        this.style.color = 'var(--text-muted)';
-      }, 3000);
-    });
-
-    // ---------------- Cinema Mode ----------------
+    const tosOverlay = document.getElementById('tosOverlay');
+    const acceptTosBtn = document.getElementById('acceptTosBtn');
+    const liveTabBtn = document.getElementById('liveTabBtn');
+    const customTabBtn = document.getElementById('customTabBtn');
+    const customInputWrapper = document.getElementById('customInputWrapper');
+    const liveMatchesSection = document.getElementById('liveMatchesSection');
     const cinemaToggle = document.getElementById('cinemaToggle');
+    const playerPlaceholder = document.getElementById('playerPlaceholder');
+    const playerContainer = document.getElementById('playerContainer');
+    const loadStreamBtn = document.getElementById('loadStreamBtn');
+    const streamUrlInput = document.getElementById('streamUrlInput');
+    const refreshStream = document.getElementById('refreshStream');
+    
+    let activeStreamUrl = "";
+
+    acceptTosBtn.addEventListener('click', () => {
+      tosOverlay.classList.remove('show');
+    });
+
+    liveTabBtn.addEventListener('click', () => {
+      liveTabBtn.classList.add('active');
+      customTabBtn.classList.remove('active');
+      customInputWrapper.style.display = 'none';
+      liveMatchesSection.style.display = 'flex';
+    });
+
+    customTabBtn.addEventListener('click', () => {
+      customTabBtn.classList.add('active');
+      liveTabBtn.classList.remove('active');
+      customInputWrapper.style.display = 'block';
+      liveMatchesSection.style.display = 'none';
+    });
+
     cinemaToggle.addEventListener('click', () => {
       document.body.classList.toggle('cinema-mode');
       cinemaToggle.classList.toggle('active');
     });
 
-    // ---------------- Refresh Player ----------------
-    document.getElementById('refreshPlayer').addEventListener('click', () => {
-      const current = playerContainer.innerHTML;
-      playerContainer.innerHTML = "";
-      setTimeout(() => { playerContainer.innerHTML = current; }, 100);
-    });
-
-    // ---------------- History System ----------------
-    function loadHistory() {
-      const stored = JSON.parse(localStorage.getItem('auraHistory')) || [];
-      if(stored.length > 0) {
-        historyContainer.style.display = 'block';
-        historyList.innerHTML = stored.map(item => `
-          <div class="history-item" onclick="${item.type === 'video' ? `loadVideo('${item.id}')` : `loadPlaylist('${item.id}')`}">
-            <i class="fa-solid fa-${item.type === 'video' ? 'play' : 'list'}"></i>
-            <div class="history-text">${item.name}</div>
-          </div>
-        `).join('');
+    function mountStreamUrl(url) {
+      if(!url) return;
+      activeStreamUrl = url;
+      playerPlaceholder.style.display = 'none';
+      
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        let videoId = "";
+        if(url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
+        else videoId = url.split('/').pop();
+        
+        playerContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+      } else if (url.endsWith('.m3u8') && Hls.isSupported()) {
+        playerContainer.innerHTML = `<video id="videoHlsEngine" controls autoplay></video>`;
+        const video = document.getElementById('videoHlsEngine');
+        const hls = new Hls();
+        hls.loadSource(url);
+        hls.attachTo(video);
       } else {
-        historyContainer.style.display = 'none';
+        playerContainer.innerHTML = `<iframe class="zoomed-stream" src="${url}" allow="autoplay;" frameborder="0" allowfullscreen></iframe>`;
       }
     }
 
-    function addToHistory(name, id, type) {
-      let stored = JSON.parse(localStorage.getItem('auraHistory')) || [];
-      stored = stored.filter(item => item.id !== id);
-      stored.unshift({ name, id, type });
-      if(stored.length > 5) stored.pop();
-      localStorage.setItem('auraHistory', JSON.stringify(stored));
-      loadHistory();
-    }
+    document.querySelectorAll('.match-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.match-card').forEach(c => c.classList.remove('active-stream'));
+        card.classList.add('active-stream');
+        
+        const directUrl = card.getAttribute('data-url');
+        if (directUrl) {
+          mountStreamUrl(directUrl);
+        } else {
+          playerContainer.innerHTML = `
+            <div class="placeholder-state">
+              <i class="fa-solid fa-link-slash" style="color: #FF9932;"></i>
+              <p style="text-align:center; padding: 0 20px;">No URL mapped to this streaming card block slot yet.<br>Mount a custom path link using your manual input bar tool module.</p>
+            </div>`;
+        }
+      });
+    });
 
-    function clearHistory() {
-      localStorage.removeItem('auraHistory');
-      loadHistory();
-    }
+    loadStreamBtn.addEventListener('click', () => {
+      const targetUrl = streamUrlInput.value.trim();
+      if(targetUrl) mountStreamUrl(targetUrl);
+    });
 
-    loadHistory();
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'c') {
+        document.body.classList.toggle('cinema-mode');
+        cinemaToggle.classList.toggle('active');
+      }
+      if (e.key.toLowerCase() === 'r') {
+        if(activeStreamUrl) mountStreamUrl(activeStreamUrl);
+      }
+    });
 
-    // ---------------- Bug Report Function ----------------
-    function reportBug() {
-      window.open(
-        "https://docs.google.com/forms/d/e/1FAIpQLSdLiRY-emj0eq7KrdY8ekh2E-TSA57DHfoQyE1ow8QywOsQyQ/viewform?usp=header",
-        "_blank"
-      );
-    }
+    refreshStream.addEventListener('click', () => {
+      if(activeStreamUrl) mountStreamUrl(activeStreamUrl);
+    });
   </script>
+
 </body>
 </html>
