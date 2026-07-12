@@ -772,15 +772,25 @@
 
     <div class="live-matches">
       
-      <div class="match-card" id="norwayEnglandMatch" data-stream="https://sportspass.site/soccer/fifa2026.html" data-type="today" data-open="00:00" data-close="23:59" onclick="handleMatchClick(this)">
+      <div class="match-card" id="spainFranceMatch" data-stream="https://sportspass.site/soccer/fifa2026.html" onclick="handleMatchClick(this)">
         <div class="match-info">
-          <div class="match-teams">🇳🇴 Norway <span class="vs">vs</span> 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England</div>
-          <div class="match-stage">LIVE MATCH</div>
+          <div class="match-teams">🇪🇸 Spain <span class="vs">vs</span> 🇫🇷 France</div>
+          <div class="match-stage">SEMI-FINAL</div>
         </div>
         <div class="match-status">
-          <div class="match-day"></div>
-          <div class="match-time"></div>
-          <div class="open-badge" style="display: none;"></div>
+          <div class="match-day">Tuesday</div>
+          <div class="match-time">8:00 PM</div>
+        </div>
+      </div>
+
+      <div class="match-card" id="englandArgentinaMatch" data-stream="https://sportspass.site/soccer/fifa2026.html" onclick="handleMatchClick(this)">
+        <div class="match-info">
+          <div class="match-teams">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England <span class="vs">vs</span> 🇦🇷 Argentina</div>
+          <div class="match-stage">SEMI-FINAL</div>
+        </div>
+        <div class="match-status">
+          <div class="match-day">Wednesday</div>
+          <div class="match-time">8:00 PM</div>
         </div>
       </div>
 
@@ -1031,143 +1041,17 @@
       }
     }
 
+    // ---------------- Fixed Handle Match Click ----------------
     function handleMatchClick(element) {
-      const now = new Date();
-      const currentMinutesToday = (now.getHours() * 60) + now.getMinutes();
-
-      const openStr = element.getAttribute('data-open');
-      const closeStr = element.getAttribute('data-close');
-
-      const [openH, openM] = openStr.split(':').map(Number);
-      const [closeH, closeM] = closeStr.split(':').map(Number);
-
-      const openMinutes = (openH * 60) + openM;
-      let closeMinutes = (closeH * 60) + closeM;
-
-      let windowActive = false;
-
-      if (closeMinutes < openMinutes) {
-        if (currentMinutesToday >= openMinutes || currentMinutesToday < closeMinutes) {
-          windowActive = true;
-        }
-      } else {
-        if (currentMinutesToday >= openMinutes && currentMinutesToday < closeMinutes) {
-          windowActive = true;
-        }
-      }
-
-      if (windowActive) {
-        // Toggle Active Shading Class on Clicked Sports Match Cards
-        document.querySelectorAll(".match-card").forEach(card => card.classList.remove("active-stream"));
-        element.classList.add("active-stream");
-
-        const url = element.getAttribute('data-stream');
-        playLiveStream(url);
-      } else {
-        alert("This stream will open 1 hour before kickoff.");
-      }
-    }
-
-    // ---------------- Fullscreen Engine Logic ----------------
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        mainPlayerWrapper.requestFullscreen().catch(err => {
-          console.error(`Error enabling fullscreen mode: ${err.message}`);
-        });
-      } else {
-        document.exitFullscreen();
-      }
-    }
-
-    document.getElementById('fullscreenToggle').addEventListener('click', toggleFullscreen);
-
-    window.addEventListener('keydown', (e) => {
-      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
-        return;
-      }
+      // Remove active styling from all cards
+      document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
       
-      if (e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        toggleFullscreen();
-      }
-      if (e.key === 'Escape') {
-        if (document.fullscreenElement) {
-          document.exitFullscreen();
-        }
-      }
-    });
+      // Add active styling to the clicked card
+      element.classList.add("active-stream");
 
-    // ---------------- Sound Bypass Engine ----------------
-    document.getElementById('soundToggle').addEventListener('click', function() {
-      const overlay = document.getElementById('playerOverlay');
-      
-      // Temporarily disable the invisible shield
-      overlay.style.pointerEvents = 'none';
-      
-      // Give visual feedback to the user so they know to click the video
-      this.classList.add('active');
-      this.style.color = '#FF9932'; 
-      
-      // Re-enable the shield after 3 seconds (enough time for the user to click the video to unmute)
-      setTimeout(() => {
-        overlay.style.pointerEvents = 'auto';
-        this.classList.remove('active');
-        this.style.color = 'var(--text-muted)';
-      }, 3000);
-    });
-
-    // ---------------- Cinema Mode ----------------
-    const cinemaToggle = document.getElementById('cinemaToggle');
-    cinemaToggle.addEventListener('click', () => {
-      document.body.classList.toggle('cinema-mode');
-      cinemaToggle.classList.toggle('active');
-    });
-
-    // ---------------- Refresh Player ----------------
-    document.getElementById('refreshPlayer').addEventListener('click', () => {
-      const current = playerContainer.innerHTML;
-      playerContainer.innerHTML = "";
-      setTimeout(() => { playerContainer.innerHTML = current; }, 100);
-    });
-
-    // ---------------- History System ----------------
-    function loadHistory() {
-      const stored = JSON.parse(localStorage.getItem('auraHistory')) || [];
-      if(stored.length > 0) {
-        historyContainer.style.display = 'block';
-        historyList.innerHTML = stored.map(item => `
-          <div class="history-item" onclick="${item.type === 'video' ? `loadVideo('${item.id}')` : `loadPlaylist('${item.id}')`}">
-            <i class="fa-solid fa-${item.type === 'video' ? 'play' : 'list'}"></i>
-            <div class="history-text">${item.name}</div>
-          </div>
-        `).join('');
-      } else {
-        historyContainer.style.display = 'none';
-      }
-    }
-
-    function addToHistory(name, id, type) {
-      let stored = JSON.parse(localStorage.getItem('auraHistory')) || [];
-      stored = stored.filter(item => item.id !== id);
-      stored.unshift({ name, id, type });
-      if(stored.length > 5) stored.pop();
-      localStorage.setItem('auraHistory', JSON.stringify(stored));
-      loadHistory();
-    }
-
-    function clearHistory() {
-      localStorage.removeItem('auraHistory');
-      loadHistory();
-    }
-
-    loadHistory();
-
-    // ---------------- Bug Report Function ----------------
-    function reportBug() {
-      window.open(
-        "https://docs.google.com/forms/d/e/1FAIpQLSdLiRY-emj0eq7KrdY8ekh2E-TSA57DHfoQyE1ow8QywOsQyQ/viewform?usp=header",
-        "_blank"
-      );
+      // Get the stream URL and play it
+      const streamUrl = element.getAttribute('data-stream');
+      playLiveStream(streamUrl);
     }
   </script>
 </body>
