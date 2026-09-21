@@ -634,19 +634,6 @@
       box-shadow: 0 10px 20px rgba(17, 76, 90, 0.3);
       transform: translateY(-2px);
     }
-
-    .share-code-display {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 2rem;
-      letter-spacing: 2px;
-      margin: 15px 0;
-      color: var(--primary);
-      background: var(--secondary);
-      padding: 10px 20px;
-      border-radius: 12px;
-      display: inline-block;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-    }
     
     .share-input-copy {
       width: 100%;
@@ -691,16 +678,14 @@
     </div>
   </div>
 
-  <!-- Share Code Modal -->
+  <!-- Share Modal -->
   <div class="modal-overlay" id="shareOverlay">
     <div class="share-modal">
       <h2><i class="fa-solid fa-share-nodes"></i> Share Video</h2>
       <div class="tos-content" style="text-align: center; overflow: hidden;">
-        <p style="font-size: 0.95rem;">Your Watch Code:</p>
-        <div class="share-code-display" id="shareCodeDisplay"></div>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Enter this code on the site, or share the direct link below.</p>
+        <p style="font-size: 0.95rem; margin-bottom: 12px;">Share this direct link with a friend:</p>
         <input type="text" id="shareUrlDisplay" class="share-input-copy" readonly>
-        <button class="tos-btn" id="copyShareBtn">Copy Link & Code</button>
+        <button class="tos-btn" id="copyShareBtn">Copy Link</button>
       </div>
       <button class="tos-btn" onclick="document.getElementById('shareOverlay').classList.remove('show')" style="background: var(--glass-bg); color: var(--text-main); margin-top: 5px;">Close</button>
     </div>
@@ -725,7 +710,7 @@
 
   <div class="input-wrapper tab-content" id="video-tab">
     <form id="videoForm">
-      <input type="text" id="videoInput" placeholder="Paste YouTube Link or Watch Code..." autocomplete="off"/>
+      <input type="text" id="videoInput" placeholder="Paste YouTube Link..." autocomplete="off"/>
       <button type="submit" class="action-btn"><i class="fa-solid fa-bolt"></i></button>
     </form>
   </div>
@@ -756,10 +741,10 @@
     <div class="whats-new-widget">
       <h4><i class="fa-solid fa-wand-magic-sparkles"></i> What's New?</h4>
       <p><strong>Share Videos Seamlessly!</strong></p>
-      <p>Want to watch with a friend? You can now generate a custom Watch Code for any video instantly.</p>
+      <p>Want to watch with a friend? You can now generate a direct share link for any video instantly.</p>
       <div class="highlight-box">
         <i class="fa-solid fa-share-nodes" style="color: var(--gradient-alt); font-size: 1.2rem; margin-bottom: 5px;"></i>
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Generate your code below</p>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Get your link below</p>
       </div>
       <button id="widgetShareBtn" class="action-btn" style="width:100%; padding: 12px; font-size: 0.95rem; margin-top: 5px;">
         Try Share Feature
@@ -850,7 +835,7 @@
     
     let currentVideoId = null; 
     
-    // ---------------- URL Parsing for Shared Codes ----------------
+    // ---------------- URL Parsing for Shared Links ----------------
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const watchCode = urlParams.get('watch');
@@ -936,7 +921,7 @@
         loadVideo(videoId, startTime);
         try { addToHistory("Video: " + videoId, videoId, 'video'); } catch(e){}
       } else {
-        alert("Invalid YouTube Video Link or Watch Code");
+        alert("Invalid YouTube Video Link");
       }
     });
 
@@ -962,7 +947,6 @@
         return;
       }
       const shareUrl = window.location.origin + window.location.pathname + "?watch=" + currentVideoId;
-      document.getElementById("shareCodeDisplay").innerText = currentVideoId;
       document.getElementById("shareUrlDisplay").value = shareUrl;
       document.getElementById("shareOverlay").classList.add("show");
     };
@@ -973,11 +957,8 @@
 
     document.getElementById("copyShareBtn").addEventListener("click", () => {
       const shareUrl = document.getElementById("shareUrlDisplay").value;
-      const code = document.getElementById("shareCodeDisplay").innerText;
       
-      const textToCopy = `Watch this video on YT Player using Code: ${code}\nOr click here: ${shareUrl}`;
-      
-      navigator.clipboard.writeText(textToCopy).then(() => {
+      navigator.clipboard.writeText(shareUrl).then(() => {
         const btn = document.getElementById("copyShareBtn");
         const originalText = btn.innerText;
         btn.innerText = "Copied to Clipboard!";
@@ -1014,7 +995,7 @@
 
     function loadPlaylist(listId) {
       currentVideoId = null; 
-      // Reset URL for playlists so a share code isn't left hanging in the bar
+      // Reset URL for playlists so a share link isn't left hanging in the bar
       window.history.pushState(null, '', window.location.pathname);
       
       playerOverlay.style.display = "none";
