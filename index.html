@@ -282,7 +282,6 @@
       transform: translateY(-2px);
     }
 
-    /* Active Shading for Selected Match Card */
     .match-card.active-stream {
       background: rgba(17, 76, 90, 0.15) !important;
       border-color: var(--secondary) !important;
@@ -358,7 +357,7 @@
       gap: 20px;
     }
 
-    /* Widgets (Shortcuts, Audio Help, Tutorial) */
+    /* Widgets */
     .shortcuts-widget, .audio-help-widget, .tutorial-widget {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
@@ -376,7 +375,7 @@
     }
     
     .audio-help-widget, .tutorial-widget {
-      display: none; /* Hidden initially, shown via JS on Live tab */
+      display: none;
     }
 
     .audio-help-widget p, .audio-help-widget ol, .tutorial-widget p {
@@ -401,7 +400,6 @@
       background: var(--secondary);
     }
 
-    /* Desktop Viewport Floating Sidebar Adjustment */
     @media(min-width: 1320px) {
       .shortcuts-widget {
         position: absolute;
@@ -412,13 +410,13 @@
       .audio-help-widget {
         position: absolute;
         left: calc(100% + 25px);
-        top: 150px; /* Stacks nicely under the shortcuts */
+        top: 150px;
         width: 260px;
       }
       .tutorial-widget {
         position: absolute;
         left: calc(100% + 25px);
-        top: 380px; /* Stacks nicely under the audio help */
+        top: 380px;
         width: 260px;
       }
     }
@@ -470,7 +468,6 @@
       width: 100%;
     }
 
-    /* Completely transparent blocker engine shield layer */
     .player-overlay {
       position: absolute;
       top: 0;
@@ -487,7 +484,6 @@
       height: 100%; 
     }
 
-    /* Mega 0.2% Zoomed-out effect applied directly to iframes */
     iframe.zoomed-stream {
       width: 50000% !important;
       height: 50000% !important;
@@ -601,7 +597,7 @@
     .history-item i { color: var(--secondary); }
     .history-text { font-size: 0.95rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 500; }
 
-    /* ---------------- Terms of Service Modal ---------------- */
+    /* ---------------- Modals (ToS & Share) ---------------- */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -623,7 +619,7 @@
       opacity: 1;
     }
 
-    .tos-modal {
+    .tos-modal, .share-modal {
       background: var(--bg-light);
       width: 90%;
       max-width: 600px;
@@ -635,11 +631,16 @@
       transition: transform 0.3s ease;
     }
 
-    .modal-overlay.show .tos-modal {
+    .share-modal {
+      max-width: 450px;
+    }
+
+    .modal-overlay.show .tos-modal,
+    .modal-overlay.show .share-modal {
       transform: translateY(0);
     }
 
-    .tos-modal h2 {
+    .tos-modal h2, .share-modal h2 {
       font-family: 'Space Grotesk', sans-serif;
       margin-bottom: 15px;
       color: var(--secondary);
@@ -648,7 +649,7 @@
       gap: 10px;
     }
 
-    .tos-modal h2 i { color: var(--primary); }
+    .tos-modal h2 i, .share-modal h2 i { color: var(--primary); }
 
     .tos-content {
       background: #fff;
@@ -690,6 +691,33 @@
       transform: translateY(-2px);
     }
 
+    /* Share UI Specific CSS */
+    .share-code-display {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 2px;
+      margin: 15px 0;
+      color: var(--primary);
+      background: var(--secondary);
+      padding: 10px 20px;
+      border-radius: 12px;
+      display: inline-block;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    
+    .share-input-copy {
+      width: 100%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      padding: 12px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
     /* ---------------- Animations ---------------- */
     @keyframes popIn {
       0% { transform: scale(0.95); opacity: 0; }
@@ -707,6 +735,7 @@
 </head>
 <body>
 
+  <!-- ToS Modal -->
   <div class="modal-overlay" id="tosOverlay">
     <div class="tos-modal">
       <h2><i class="fa-solid fa-file-contract"></i> Terms of Service</h2>
@@ -724,6 +753,21 @@
         <p>To the fullest extent permitted by applicable law, YT Player shall not be liable for any loss, damage, offensive material, inappropriate advertising, malware, redirects, or any other content encountered through third-party providers. Your decision to access or watch any live stream is made entirely at your own risk.</p>
       </div>
       <button class="tos-btn" onclick="acceptToS()">I Understand & Accept</button>
+    </div>
+  </div>
+
+  <!-- Share Code Modal -->
+  <div class="modal-overlay" id="shareOverlay">
+    <div class="share-modal">
+      <h2><i class="fa-solid fa-share-nodes"></i> Share Video</h2>
+      <div class="tos-content" style="text-align: center; overflow: hidden;">
+        <p style="font-size: 0.95rem;">Your Watch Code:</p>
+        <div class="share-code-display" id="shareCodeDisplay"></div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Enter this code on the site, or share the direct link below.</p>
+        <input type="text" id="shareUrlDisplay" class="share-input-copy" readonly>
+        <button class="tos-btn" id="copyShareBtn">Copy Link & Code</button>
+      </div>
+      <button class="tos-btn" onclick="document.getElementById('shareOverlay').classList.remove('show')" style="background: var(--glass-bg); color: var(--text-main); margin-top: 5px;">Close</button>
     </div>
   </div>
 
@@ -746,7 +790,8 @@
 
   <div class="input-wrapper tab-content" id="video-tab">
     <form id="videoForm">
-      <input type="text" id="videoInput" placeholder="Paste YouTube Link..." autocomplete="off"/>
+      <!-- Changed Placeholder to notify users they can paste a Watch Code -->
+      <input type="text" id="videoInput" placeholder="Paste YouTube Link or Watch Code..." autocomplete="off"/>
       <button type="submit" class="action-btn"><i class="fa-solid fa-bolt"></i></button>
     </form>
   </div>
@@ -824,6 +869,12 @@
     <div class="control-icon" id="refreshPlayer" title="Reload Player">
       <i class="fa-solid fa-rotate-right"></i>
     </div>
+    
+    <!-- New Share Button added here -->
+    <div class="control-icon" id="shareToggle" title="Share Video">
+      <i class="fa-solid fa-share-nodes"></i>
+    </div>
+
     <div class="control-icon" onclick="clearHistory()" title="Clear History">
       <i class="fa-solid fa-trash"></i>
     </div>
@@ -855,6 +906,26 @@
     const historyContainer = document.getElementById("historyContainer");
     const tosOverlay = document.getElementById("tosOverlay");
     
+    // Track currently playing video for sharing logic
+    let currentVideoId = null; 
+    
+    // ---------------- URL Parsing for Shared Codes ----------------
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const watchCode = urlParams.get('watch');
+      
+      // If a valid 11-char code is in the URL, automatically load it
+      if (watchCode && /^[a-zA-Z0-9_-]{11}$/.test(watchCode)) {
+        // Ensure video tab is selected
+        document.querySelector('.tab-btn[data-tab="video"]').click();
+        document.getElementById("videoInput").value = watchCode;
+        loadVideo(watchCode);
+        
+        // Wrap in try-catch in case addToHistory is missing from this file's context
+        try { addToHistory("Shared Video: " + watchCode, watchCode, 'video'); } catch(e){}
+      }
+    });
+
     // ---------------- Terms of Service Logic ----------------
     function checkToS() {
       const accepted = localStorage.getItem('ytPlayerNewTosAccepted');
@@ -872,7 +943,7 @@
     const tabButtons = document.querySelectorAll(".tab-btn");
     const soundToggleBtn = document.getElementById("soundToggle");
     const audioHelpWidget = document.getElementById("audioHelpWidget"); 
-    const tutorialWidget = document.getElementById("tutorialWidget"); // Get Tutorial Widget
+    const tutorialWidget = document.getElementById("tutorialWidget");
 
     tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
@@ -888,11 +959,11 @@
           checkToS();
           soundToggleBtn.style.display = "flex";  
           audioHelpWidget.style.display = "flex"; 
-          tutorialWidget.style.display = "flex";  // Show Tutorial Widget
+          tutorialWidget.style.display = "flex";  
         } else {
           soundToggleBtn.style.display = "none";  
           audioHelpWidget.style.display = "none"; 
-          tutorialWidget.style.display = "none";  // Hide Tutorial Widget
+          tutorialWidget.style.display = "none";  
         }
       });
     });
@@ -906,9 +977,12 @@
 
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = input.match(regExp);
+      
+      // Check if it's a standard URL, OR explicitly check if it's an 11 character code
       if (match && match[2].length === 11) {
         videoId = match[2];
-      } else if (input.length === 11) {
+      } else if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) {
+        // Direct Watch Code input support
         videoId = input;
       }
 
@@ -926,16 +1000,16 @@
       }
 
       if (videoId) {
-        // Clear card highlights
         document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
         loadVideo(videoId, startTime);
-        addToHistory("Video: " + videoId, videoId, 'video');
+        try { addToHistory("Video: " + videoId, videoId, 'video'); } catch(e){}
       } else {
-        alert("Invalid YouTube Video Link");
+        alert("Invalid YouTube Video Link or Watch Code");
       }
     });
 
     function loadVideo(id, start = 0) {
+      currentVideoId = id; // Store for sharing system
       playerOverlay.style.display = "none"; 
       playerContainer.innerHTML = `
         <iframe 
@@ -944,6 +1018,43 @@
           allowfullscreen>
         </iframe>`;
     }
+
+    // ---------------- Sharing Logic ----------------
+    document.getElementById("shareToggle").addEventListener("click", () => {
+      if (!currentVideoId) {
+        alert("Please load a YouTube video first before sharing.");
+        return;
+      }
+      
+      // Build static, backend-free share URL
+      const shareUrl = window.location.origin + window.location.pathname + "?watch=" + currentVideoId;
+      
+      // Update Modal
+      document.getElementById("shareCodeDisplay").innerText = currentVideoId;
+      document.getElementById("shareUrlDisplay").value = shareUrl;
+      document.getElementById("shareOverlay").classList.add("show");
+    });
+
+    document.getElementById("copyShareBtn").addEventListener("click", () => {
+      const shareUrl = document.getElementById("shareUrlDisplay").value;
+      const code = document.getElementById("shareCodeDisplay").innerText;
+      
+      const textToCopy = `Watch this video on YT Player using Code: ${code}\nOr click here: ${shareUrl}`;
+      
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const btn = document.getElementById("copyShareBtn");
+        const originalText = btn.innerText;
+        btn.innerText = "Copied to Clipboard!";
+        btn.style.background = "#114C5A";
+        
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = ""; // Revert to original gradient
+        }, 2000);
+      }).catch(err => {
+        alert("Failed to copy. Please manually copy the link above.");
+      });
+    });
 
     // ---------------- Channel/Playlist Logic ----------------
     document.getElementById("channelForm").addEventListener("submit", function(e) {
@@ -961,13 +1072,14 @@
       if (listId) {
         document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
         loadPlaylist(listId);
-        addToHistory("Playlist: " + listId, listId, 'playlist');
+        try { addToHistory("Playlist: " + listId, listId, 'playlist'); } catch(e){}
       } else {
         alert("Please use a Playlist URL or a 'channel/UC...' URL.");
       }
     });
 
     function loadPlaylist(listId) {
+      currentVideoId = null; // Clear share ID since it's a playlist
       playerOverlay.style.display = "none";
       playerContainer.innerHTML = `
         <iframe 
@@ -979,6 +1091,7 @@
 
     // ---------------- Live Stream Logic ----------------
     function playLiveStream(url) {
+      currentVideoId = null; // Disable standard sharing for external live m3u8 streams
       if (url === "#" || !url) {
         alert("Stream link has not been updated yet.");
         return;
@@ -1004,7 +1117,6 @@
           });
         }
       } else {
-        // Hide the click-blocking overlay and use a standard interactive iframe
         playerOverlay.style.display = "none";
         playerContainer.innerHTML = `
           <iframe 
@@ -1020,13 +1132,8 @@
 
     // ---------------- Fixed Handle Match Click ----------------
     function handleMatchClick(element) {
-      // Remove active styling from all cards
       document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
-      
-      // Add active styling to the clicked card
       element.classList.add("active-stream");
-
-      // Get the stream URL and play it
       const streamUrl = element.getAttribute('data-stream');
       playLiveStream(streamUrl);
     }
