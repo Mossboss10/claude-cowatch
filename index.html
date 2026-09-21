@@ -23,12 +23,12 @@
   <style>
     /* ---------------- Variables & Reset (Light Theme) ---------------- */
     :root {
-      --bg-light: #F1F6F4;       /* Arctic Powder */
-      --primary: #FFC801;        /* Forsythia */
-      --secondary: #114C5A;      /* Nocturnal */
-      --hover-bg: #D9E8E2;       /* Mystic Mint */
-      --gradient-alt: #FF9932;   /* Deep Saffron */
-      --text-main: #172B36;      /* Oceanic Noir */
+      --bg-light: #F1F6F4;       
+      --primary: #FFC801;        
+      --secondary: #114C5A;      
+      --hover-bg: #D9E8E2;       
+      --gradient-alt: #FF9932;   
+      --text-main: #172B36;      
       --glass-bg: rgba(255, 255, 255, 0.6);
       --glass-border: rgba(17, 76, 90, 0.15);
       --accent-glow: 0 0 20px rgba(255, 200, 1, 0.4);
@@ -70,7 +70,8 @@
     body.cinema-mode .bug-bar-container,
     body.cinema-mode .shortcuts-widget,
     body.cinema-mode .audio-help-widget,
-    body.cinema-mode .tutorial-widget {
+    body.cinema-mode .tutorial-widget,
+    body.cinema-mode .whats-new-widget {
       opacity: 0.1;
       filter: blur(2px);
       pointer-events: none;
@@ -204,12 +205,6 @@
       color: var(--text-main);
     }
 
-    .ad-disclaimer i {
-      color: var(--gradient-alt);
-      font-size: 1.2rem;
-      margin-top: 2px;
-    }
-
     form {
       display: flex;
       width: 100%;
@@ -306,44 +301,12 @@
       font-weight: 500;
     }
 
-    .match-info .match-stage {
-      font-size: 0.9rem;
-      color: #3b525e;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-weight: 700;
-      margin-top: 6px;
-    }
-
     .match-status {
       text-align: right;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
       gap: 2px;
-    }
-
-    .match-status .match-day {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--gradient-alt);
-    }
-
-    .match-status .match-time {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .match-status .open-badge {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-      background: rgba(17, 76, 90, 0.08);
-      padding: 4px 12px;
-      border-radius: 8px;
-      display: inline-block;
-      font-weight: 500;
     }
 
     /* ---------------- Centered Layout Engine ---------------- */
@@ -358,7 +321,7 @@
     }
 
     /* Widgets */
-    .shortcuts-widget, .audio-help-widget, .tutorial-widget {
+    .shortcuts-widget, .audio-help-widget, .tutorial-widget, .whats-new-widget {
       background: var(--glass-bg);
       border: 1px solid var(--glass-border);
       backdrop-filter: blur(12px);
@@ -378,29 +341,23 @@
       display: none;
     }
 
-    .audio-help-widget p, .audio-help-widget ol, .tutorial-widget p {
-      font-size: 0.9rem;
-      color: var(--text-main);
+    .whats-new-widget p {
+      font-size: 0.95rem;
+      line-height: 1.4;
     }
     
-    .audio-help-widget ol {
-      padding-left: 18px;
-      margin-top: -5px;
-    }
-    
-    .audio-help-widget li {
-      margin-bottom: 6px;
-    }
-
-    .tutorial-widget video {
-      width: 100%;
+    .whats-new-widget .highlight-box {
+      background: rgba(255, 153, 50, 0.15);
+      border: 1px dashed var(--gradient-alt);
+      padding: 10px;
       border-radius: 12px;
-      border: 1px solid var(--glass-border);
+      text-align: center;
       margin-top: 5px;
-      background: var(--secondary);
     }
 
+    /* Desktop Viewport Floating Sidebar Adjustment */
     @media(min-width: 1320px) {
+      /* Right side widgets */
       .shortcuts-widget {
         position: absolute;
         left: calc(100% + 25px);
@@ -419,9 +376,16 @@
         top: 380px;
         width: 260px;
       }
+      /* Left side widgets */
+      .whats-new-widget {
+        position: absolute;
+        right: calc(100% + 25px);
+        top: 0;
+        width: 260px;
+      }
     }
 
-    .shortcuts-widget h4, .audio-help-widget h4, .tutorial-widget h4 {
+    .shortcuts-widget h4, .audio-help-widget h4, .tutorial-widget h4, .whats-new-widget h4 {
       font-family: 'Space Grotesk', sans-serif;
       color: var(--secondary);
       font-size: 1.1rem;
@@ -432,9 +396,8 @@
       padding-bottom: 8px;
     }
     
-    .audio-help-widget h4, .tutorial-widget h4 {
-      color: var(--gradient-alt); 
-    }
+    .whats-new-widget h4 { color: var(--gradient-alt); }
+    .audio-help-widget h4, .tutorial-widget h4 { color: var(--gradient-alt); }
 
     .shortcut-row {
       display: flex;
@@ -465,7 +428,6 @@
       box-shadow: 0 20px 50px rgba(17, 43, 54, 0.15);
       position: relative;
       animation: popIn 0.5s ease;
-      width: 100%;
     }
 
     .player-overlay {
@@ -482,13 +444,6 @@
     #playerContainer {
       width: 100%;
       height: 100%; 
-    }
-
-    iframe.zoomed-stream {
-      width: 50000% !important;
-      height: 50000% !important;
-      transform: scale(0.002);
-      transform-origin: top left;
     }
 
     iframe, video {
@@ -631,9 +586,7 @@
       transition: transform 0.3s ease;
     }
 
-    .share-modal {
-      max-width: 450px;
-    }
+    .share-modal { max-width: 450px; }
 
     .modal-overlay.show .tos-modal,
     .modal-overlay.show .share-modal {
@@ -664,15 +617,6 @@
       border: 1px solid var(--glass-border);
     }
 
-    .tos-content h3 {
-      font-size: 1.05rem;
-      margin-top: 15px;
-      margin-bottom: 5px;
-      color: var(--secondary);
-    }
-    
-    .tos-content h3:first-child { margin-top: 0; }
-
     .tos-btn {
       width: 100%;
       background: linear-gradient(135deg, var(--secondary), var(--text-main));
@@ -691,7 +635,6 @@
       transform: translateY(-2px);
     }
 
-    /* Share UI Specific CSS */
     .share-code-display {
       font-family: 'Space Grotesk', sans-serif;
       font-size: 2rem;
@@ -743,14 +686,6 @@
         <h3>1. Third-Party Content & Advertisements</h3>
         <p>YT Player is an aggregation client. We do not host, broadcast, or transmit any of the live streams available on the Live tab. All streams are embedded from independent third-party websites.</p>
         <p>By choosing to open or watch a live stream, you acknowledge that you are accessing content provided entirely by third parties and do so at your own discretion and risk.</p>
-        <p>Third-party providers may display advertisements, pop-ups, redirects, or other content before or during playback. YT Player has no control over this content and is not responsible or liable for any advertisements, websites, or material you may encounter. If you choose to continue to a third-party stream, you accept full responsibility for doing so.</p>
-        
-        <h3>2. Intellectual Property Rights</h3>
-        <p>The layout, design, and proprietary code of YT Player are protected by copyright. You may not reproduce, distribute, modify, or create derivative works of our interface without permission. We respect the intellectual property rights of others and expect users to do the same.</p>
-        
-        <h3>3. Limitation of Liability</h3>
-        <p>The service is provided on an "AS IS" and "AS AVAILABLE" basis. We make no guarantees regarding the availability, quality, legality, safety, or suitability of any third-party stream or website.</p>
-        <p>To the fullest extent permitted by applicable law, YT Player shall not be liable for any loss, damage, offensive material, inappropriate advertising, malware, redirects, or any other content encountered through third-party providers. Your decision to access or watch any live stream is made entirely at your own risk.</p>
       </div>
       <button class="tos-btn" onclick="acceptToS()">I Understand & Accept</button>
     </div>
@@ -790,7 +725,6 @@
 
   <div class="input-wrapper tab-content" id="video-tab">
     <form id="videoForm">
-      <!-- Changed Placeholder to notify users they can paste a Watch Code -->
       <input type="text" id="videoInput" placeholder="Paste YouTube Link or Watch Code..." autocomplete="off"/>
       <button type="submit" class="action-btn"><i class="fa-solid fa-bolt"></i></button>
     </form>
@@ -807,19 +741,31 @@
   </div>
 
   <div class="input-wrapper tab-content" id="live-tab" style="display:none;">
-    
     <div class="ad-disclaimer">
       <i class="fa-solid fa-triangle-exclamation"></i>
       <div>
         <strong>Ad Warning:</strong> When you click play on a stream, it may try to open an advertisement in a new website or tab. Just close the new window and come back to this page to watch your match.
       </div>
     </div>
-
-    <div class="live-matches">
-      </div>
+    <div class="live-matches"></div>
   </div>
 
   <div class="player-section-layout">
+    
+    <!-- NEW "WHAT'S NEW" LEFT WIDGET -->
+    <div class="whats-new-widget">
+      <h4><i class="fa-solid fa-wand-magic-sparkles"></i> What's New?</h4>
+      <p><strong>Share Videos Seamlessly!</strong></p>
+      <p>Want to watch with a friend? You can now generate a custom Watch Code for any video instantly.</p>
+      <div class="highlight-box">
+        <i class="fa-solid fa-share-nodes" style="color: var(--gradient-alt); font-size: 1.2rem; margin-bottom: 5px;"></i>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Generate your code below</p>
+      </div>
+      <button id="widgetShareBtn" class="action-btn" style="width:100%; padding: 12px; font-size: 0.95rem; margin-top: 5px;">
+        Try Share Feature
+      </button>
+    </div>
+
     <div class="player-wrapper" id="mainPlayerWrapper">
       <div id="playerOverlay" class="player-overlay" style="display: none;"></div>
       <div id="playerContainer">
@@ -830,6 +776,7 @@
       </div>
     </div>
 
+    <!-- RIGHT SIDE WIDGETS -->
     <div class="shortcuts-widget">
       <h4><i class="fa-solid fa-keyboard"></i> Shortcuts</h4>
       <div class="shortcut-row">
@@ -845,11 +792,6 @@
     <div class="audio-help-widget" id="audioHelpWidget">
       <h4><i class="fa-solid fa-volume-xmark"></i> Not hearing any audio?</h4>
       <p>Because the stream is highly zoomed out, the normal unmute button is too small to click.</p>
-      <ol>
-        <li>Click the <strong>Sound <i class="fa-solid fa-volume-high"></i></strong> button below the player.</li>
-        <li>Quickly double-click or tap anywhere on the video player itself.</li>
-        <li>The protective shield will turn back on after 3 seconds.</li>
-      </ol>
     </div>
 
     <div class="tutorial-widget" id="tutorialWidget">
@@ -870,7 +812,7 @@
       <i class="fa-solid fa-rotate-right"></i>
     </div>
     
-    <!-- New Share Button added here -->
+    <!-- MAIN SHARE BUTTON -->
     <div class="control-icon" id="shareToggle" title="Share Video">
       <i class="fa-solid fa-share-nodes"></i>
     </div>
@@ -906,7 +848,6 @@
     const historyContainer = document.getElementById("historyContainer");
     const tosOverlay = document.getElementById("tosOverlay");
     
-    // Track currently playing video for sharing logic
     let currentVideoId = null; 
     
     // ---------------- URL Parsing for Shared Codes ----------------
@@ -914,14 +855,10 @@
       const urlParams = new URLSearchParams(window.location.search);
       const watchCode = urlParams.get('watch');
       
-      // If a valid 11-char code is in the URL, automatically load it
       if (watchCode && /^[a-zA-Z0-9_-]{11}$/.test(watchCode)) {
-        // Ensure video tab is selected
         document.querySelector('.tab-btn[data-tab="video"]').click();
         document.getElementById("videoInput").value = watchCode;
         loadVideo(watchCode);
-        
-        // Wrap in try-catch in case addToHistory is missing from this file's context
         try { addToHistory("Shared Video: " + watchCode, watchCode, 'video'); } catch(e){}
       }
     });
@@ -929,11 +866,8 @@
     // ---------------- Terms of Service Logic ----------------
     function checkToS() {
       const accepted = localStorage.getItem('ytPlayerNewTosAccepted');
-      if (!accepted) {
-        tosOverlay.classList.add('show');
-      }
+      if (!accepted) { tosOverlay.classList.add('show'); }
     }
-
     function acceptToS() {
       localStorage.setItem('ytPlayerNewTosAccepted', 'true');
       tosOverlay.classList.remove('show');
@@ -968,7 +902,7 @@
       });
     });
 
-    // ---------------- Video Logic ----------------
+    // ---------------- Video Logic & URL Pushing ----------------
     document.getElementById("videoForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const input = document.getElementById("videoInput").value.trim();
@@ -978,11 +912,9 @@
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = input.match(regExp);
       
-      // Check if it's a standard URL, OR explicitly check if it's an 11 character code
       if (match && match[2].length === 11) {
         videoId = match[2];
       } else if (input.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(input)) {
-        // Direct Watch Code input support
         videoId = input;
       }
 
@@ -1009,7 +941,11 @@
     });
 
     function loadVideo(id, start = 0) {
-      currentVideoId = id; // Store for sharing system
+      currentVideoId = id; 
+      
+      // MAGIC HAPPENS HERE: Update the URL dynamically in the browser address bar
+      window.history.pushState({ videoId: id }, '', '?watch=' + id);
+
       playerOverlay.style.display = "none"; 
       playerContainer.innerHTML = `
         <iframe 
@@ -1020,20 +956,20 @@
     }
 
     // ---------------- Sharing Logic ----------------
-    document.getElementById("shareToggle").addEventListener("click", () => {
+    const triggerShare = () => {
       if (!currentVideoId) {
         alert("Please load a YouTube video first before sharing.");
         return;
       }
-      
-      // Build static, backend-free share URL
       const shareUrl = window.location.origin + window.location.pathname + "?watch=" + currentVideoId;
-      
-      // Update Modal
       document.getElementById("shareCodeDisplay").innerText = currentVideoId;
       document.getElementById("shareUrlDisplay").value = shareUrl;
       document.getElementById("shareOverlay").classList.add("show");
-    });
+    };
+
+    // Wire up BOTH share buttons
+    document.getElementById("shareToggle").addEventListener("click", triggerShare);
+    document.getElementById("widgetShareBtn").addEventListener("click", triggerShare);
 
     document.getElementById("copyShareBtn").addEventListener("click", () => {
       const shareUrl = document.getElementById("shareUrlDisplay").value;
@@ -1049,7 +985,7 @@
         
         setTimeout(() => {
           btn.innerText = originalText;
-          btn.style.background = ""; // Revert to original gradient
+          btn.style.background = ""; 
         }, 2000);
       }).catch(err => {
         alert("Failed to copy. Please manually copy the link above.");
@@ -1061,14 +997,12 @@
       e.preventDefault();
       const url = document.getElementById("channelInput").value.trim();
       let listId = "";
-
       if(url.includes("list=")) {
         listId = url.split("list=")[1].split("&")[0];
       } else if (url.includes("/channel/UC")) {
         const channelId = url.split("/channel/")[1].split(/[/?]/)[0];
         listId = "UU" + channelId.substring(2);
       }
-
       if (listId) {
         document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
         loadPlaylist(listId);
@@ -1079,7 +1013,10 @@
     });
 
     function loadPlaylist(listId) {
-      currentVideoId = null; // Clear share ID since it's a playlist
+      currentVideoId = null; 
+      // Reset URL for playlists so a share code isn't left hanging in the bar
+      window.history.pushState(null, '', window.location.pathname);
+      
       playerOverlay.style.display = "none";
       playerContainer.innerHTML = `
         <iframe 
@@ -1087,55 +1024,6 @@
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
           allowfullscreen>
         </iframe>`;
-    }
-
-    // ---------------- Live Stream Logic ----------------
-    function playLiveStream(url) {
-      currentVideoId = null; // Disable standard sharing for external live m3u8 streams
-      if (url === "#" || !url) {
-        alert("Stream link has not been updated yet.");
-        return;
-      }
-
-      if (url.includes('.m3u8')) {
-        playerOverlay.style.display = "none"; 
-        playerContainer.innerHTML = `<video id="hlsVideo" controls autoplay style="width: 100%; height: 100%; background: #000;"></video>`;
-        const video = document.getElementById('hlsVideo');
-        
-        if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(url);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play();
-          });
-        } 
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = url;
-          video.addEventListener('loadedmetadata', function() {
-            video.play();
-          });
-        }
-      } else {
-        playerOverlay.style.display = "none";
-        playerContainer.innerHTML = `
-          <iframe 
-            class="embed-responsive-item"
-            src="${url}" 
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; clipboard-write" 
-            allowfullscreen=""
-            scrolling="no"
-            allowtransparency="true">
-          </iframe>`;
-      }
-    }
-
-    // ---------------- Fixed Handle Match Click ----------------
-    function handleMatchClick(element) {
-      document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
-      element.classList.add("active-stream");
-      const streamUrl = element.getAttribute('data-stream');
-      playLiveStream(streamUrl);
     }
   </script>
 </body>
