@@ -648,6 +648,51 @@
       outline: none;
     }
 
+
+
+    .parent-toast {
+      position: fixed;
+      top: 22px;
+      right: 22px;
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: min(390px, calc(100vw - 32px));
+      padding: 15px 18px;
+      border-radius: 16px;
+      color: #fff;
+      background: #114C5A;
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 14px 38px rgba(0,0,0,0.22);
+      opacity: 0;
+      transform: translateY(-12px);
+      pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .parent-toast.show { opacity: 1; transform: translateY(0); }
+    .parent-toast i { color: #FFC801; font-size: 1.35rem; }
+    .parent-toast strong { display: block; font-size: 1rem; }
+    .parent-toast span { display: block; font-size: .85rem; opacity: .88; margin-top: 2px; }
+    @media (max-width: 520px) {
+      .parent-toast { top: 12px; right: 12px; left: 12px; max-width: none; }
+    }
+
+    /* ---------------- Parent Mode ---------------- */
+    .parent-status {
+      display: none;
+      margin: -15px 0 20px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(17, 76, 90, 0.10);
+      border: 1px solid var(--glass-border);
+      color: var(--secondary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .parent-status.active { display: inline-flex; align-items: center; gap: 8px; }
+
     /* ---------------- Animations ---------------- */
     @keyframes popIn {
       0% { transform: scale(0.95); opacity: 0; }
@@ -664,6 +709,10 @@
   </style>
 </head>
 <body>
+  <div class="parent-toast" id="parentToast" role="status" aria-live="polite">
+    <i class="fa-solid fa-shield-halved"></i>
+    <div><strong>Parent mode enabled</strong><span>New videos will require the parent PIN.</span></div>
+  </div>
 
   <!-- ToS Modal -->
   <div class="modal-overlay" id="tosOverlay">
@@ -694,6 +743,7 @@
   <div class="logo-area">
     <h1>YT <span style="font-weight:300">PLAYER</span></h1>
     <span class="badge">v3.8 Stream Hub</span>
+    <div class="parent-status" id="parentStatus"><i class="fa-solid fa-shield-halved"></i> Parent mode is ON</div>
   </div>
 
   <div class="tabs">
@@ -833,18 +883,162 @@
     const historyContainer = document.getElementById("historyContainer");
     const tosOverlay = document.getElementById("tosOverlay");
     
-    let currentVideoId = null; 
+    let currentVideoId = null;
+
+
+    const PARENT_MODE_KEY = "ytPlayerParentMode";
+    const PARENT_PIN_HASH_KEY = "ytPlayerParentPinHash";
+    const APPROVED_VIDEOS_KEY = "ytPlayerApprovedVideos";
+
+    // This is a local convenience lock, not tamper-proof parental control.
+    // Anyone with access to browser developer tools or the laptop account can bypass it.
+    function simplePinHash(pin) {
+      let hash = 2166136261;
+      const value = "yt-player-parent-v1:" + pin;
+      for (let i = 0; i < value.length; i++) {
+        hash ^= value.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0).toString(16);
+    }
+
+    function isParentModeOn() {
+      return localStorage.getItem(PARENT_MODE_KEY) === "true";
+    }
+
+
+    function showParentModeNotification() {
+      const toast = document.getElementById("parentToast");
+      if (!toast) return;
+      toast.classList.add("show");
+      window.setTimeout(() => toast.classList.remove("show"), 4200);
+    }
+
+    function updateParentStatus() {
+      const status = document.getElementById("parentStatus");
+      if (status) status.classList.toggle("active", isParentModeOn());
+    }
+
+    function getApprovedVideos() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(APPROVED_VIDEOS_KEY) || "[]");
+        return Array.isArray(saved) ? saved : [];
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function isVideoApproved(videoId) {
+      return getApprovedVideos().some(item => item && item.id === videoId);
+    }
+
+    function saveApprovedVideo(videoId) {
+      const approved = getApprovedVideos();
+      if (!approved.some(item => item && item.id === videoId)) {
+        approved.push({
+          id: videoId,
+          approvedAt: new Date().toISOString()
+        });
+        localStorage.setItem(APPROVED_VIDEOS_KEY, JSON.stringify(approved));
+      }
+    }
+
+    function verifyParentPin() {
+      const savedHash = localStorage.getItem(PARENT_PIN_HASH_KEY);
+      if (!savedHash) return false;
+      const entered = window.prompt("Enter the parent PIN:");
+      if (entered === null) return false;
+      if (simplePinHash(entered.trim()) !== savedHash) {
+        alert("Incorrect PIN.");
+        return false;
+      }
+      return true;
+    }
+
+    function setupParentPinAndEnable() {
+      if (localStorage.getItem(PARENT_PIN_HASH_KEY)) {
+        if (!verifyParentPin()) return;
+        localStorage.setItem(PARENT_MODE_KEY, "true");
+        updateParentStatus();
+        showParentModeNotification();
+        openParentSettings();
+        return;
+      }
+
+      const first = window.prompt("Create a parent PIN (4–8 digits):");
+      if (first === null) return;
+      if (!/^\d{4,8}$/.test(first.trim())) {
+        alert("Please choose a PIN containing 4–8 digits.");
+        return;
+      }
+      const second = window.prompt("Enter the PIN again to confirm:");
+      if (second === null) return;
+      if (first.trim() !== second.trim()) {
+        alert("Those PINs did not match. Please try again.");
+        return;
+      }
+
+      localStorage.setItem(PARENT_PIN_HASH_KEY, simplePinHash(first.trim()));
+      localStorage.setItem(PARENT_MODE_KEY, "true");
+      updateParentStatus();
+      showParentModeNotification();
+      openParentSettings();
+    }
+
+    function openParentSettings() {
+      const approvedCount = getApprovedVideos().length;
+      const choice = window.prompt(
+        "PARENT SETTINGS\n\n" +
+        "Approved videos saved on this laptop: " + approvedCount + "\\n\\n" +
+        "Type 1 to switch Parent Mode OFF\\n" +
+        "Type 2 to clear the approved-video list\n" +
+        "Type 3 to keep Parent Mode ON\n\n" +
+        "Choose 1, 2 or 3:"
+      );
+
+      if (choice === "1") {
+        if (!verifyParentPin()) return;
+        localStorage.setItem(PARENT_MODE_KEY, "false");
+        updateParentStatus();
+        alert("Parent mode is now OFF.");
+      } else if (choice === "2") {
+        if (!verifyParentPin()) return;
+        if (confirm("Remove all saved video approvals from this laptop?")) {
+          localStorage.setItem(APPROVED_VIDEOS_KEY, "[]");
+          alert("The approved-video list has been cleared.");
+        }
+      } else if (choice === "3") {
+        alert("Parent mode remains ON.");
+      }
+    }
+
+    function handleParentCommand() {
+      setupParentPinAndEnable();
+      document.getElementById("videoInput").value = "";
+    }
+
+    function requestVideoPlayback(videoId, start = 0) {
+      if (isParentModeOn() && !isVideoApproved(videoId)) {
+        if (!verifyParentPin()) return;
+        saveApprovedVideo(videoId);
+        alert("Video approved. It has been saved on this laptop, so it won't need the PIN next time.");
+      }
+      loadVideo(videoId, start);
+      try { addToHistory("Video: " + videoId, videoId, "video"); } catch (error) {}
+    }
+
+ 
     
     // ---------------- URL Parsing for Shared Links ----------------
     window.addEventListener('DOMContentLoaded', () => {
+      updateParentStatus();
       const urlParams = new URLSearchParams(window.location.search);
       const watchCode = urlParams.get('watch');
       
       if (watchCode && /^[a-zA-Z0-9_-]{11}$/.test(watchCode)) {
         document.querySelector('.tab-btn[data-tab="video"]').click();
         document.getElementById("videoInput").value = watchCode;
-        loadVideo(watchCode);
-        try { addToHistory("Shared Video: " + watchCode, watchCode, 'video'); } catch(e){}
+        requestVideoPlayback(watchCode);
       }
     });
 
@@ -891,6 +1085,7 @@
     document.getElementById("videoForm").addEventListener("submit", function(e) {
       e.preventDefault();
       const input = document.getElementById("videoInput").value.trim();
+      if (input.toUpperCase() === "PARENT") { handleParentCommand(); return; }
       let videoId = "";
       let startTime = 0;
 
@@ -918,8 +1113,7 @@
 
       if (videoId) {
         document.querySelectorAll(".match-card").forEach(c => c.classList.remove("active-stream"));
-        loadVideo(videoId, startTime);
-        try { addToHistory("Video: " + videoId, videoId, 'video'); } catch(e){}
+        requestVideoPlayback(videoId, startTime);
       } else {
         alert("Invalid YouTube Video Link");
       }
