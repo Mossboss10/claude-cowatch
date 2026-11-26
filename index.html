@@ -706,6 +706,28 @@
       from { transform: translateY(10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    /* ---------------- Account Sign-in ---------------- */
+    .account-button {
+      position: fixed; top: 18px; right: 20px; z-index: 1000;
+      border: 0; border-radius: 999px; padding: 10px 16px;
+      color: #fff; background: var(--secondary); font-weight: 700;
+      cursor: pointer; box-shadow: 0 6px 18px rgba(17,76,90,.18);
+    }
+    .account-button:hover { background: var(--text-main); }
+    .account-modal { max-width: 440px; }
+    .account-modal p { line-height: 1.5; margin: 0 0 14px; }
+    .account-modal label { display:block; font-weight:600; margin:12px 0 6px; }
+    .account-modal input {
+      width:100%; padding:12px 14px; border:1px solid var(--glass-border);
+      border-radius:10px; font-size:1rem; color:var(--text-main);
+    }
+    .account-modal .account-actions { display:flex; gap:10px; margin-top:16px; }
+    .account-modal .account-actions button { flex:1; }
+    .account-status { min-height:1.4em; margin-top:12px !important; color:var(--secondary); }
+    .account-note { font-size:.88rem; color:var(--text-muted); }
+    @media(max-width:520px) { .account-button { top:12px; right:12px; } }
+
   </style>
 </head>
 <body>
@@ -713,6 +735,9 @@
     <i class="fa-solid fa-shield-halved"></i>
     <div><strong>Parent mode enabled</strong><span>New videos will require the parent PIN.</span></div>
   </div>
+
+
+  <button class="account-button" id="accountButton" type="button">Sign in</button>
 
   <!-- ToS Modal -->
   <div class="modal-overlay" id="tosOverlay">
@@ -737,6 +762,33 @@
         <button class="tos-btn" id="copyShareBtn">Copy Link</button>
       </div>
       <button class="tos-btn" onclick="document.getElementById('shareOverlay').classList.remove('show')" style="background: var(--glass-bg); color: var(--text-main); margin-top: 5px;">Close</button>
+    </div>
+  </div>
+
+
+  <!-- Account Modal -->
+  <div class="modal-overlay" id="authOverlay" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="share-modal account-modal">
+      <h2 id="authTitle"><i class="fa-solid fa-user"></i> <span id="authHeading">Sign in</span></h2>
+      <form id="authForm">
+        <div id="authNameField" hidden>
+          <label for="authName">Name</label>
+          <input id="authName" name="name" autocomplete="name" maxlength="100">
+        </div>
+        <label for="authEmail">Email</label>
+        <input id="authEmail" name="email" type="email" autocomplete="email" required maxlength="254">
+        <label for="authPassword">Password</label>
+        <input id="authPassword" name="password" type="password" autocomplete="current-password" required minlength="6">
+        <p class="account-note" id="signupNotice" hidden>
+          When you create an account, your name and email are saved in the site owner’s Google Sheet and Firebase to provide your account and watch-history sync. They are not used for marketing through this feature.
+        </p>
+        <p class="account-status" id="authStatus" role="status" aria-live="polite"></p>
+        <div class="account-actions">
+          <button class="tos-btn" id="authSubmit" type="submit">Sign in</button>
+          <button class="tos-btn" id="authModeToggle" type="button" style="background:var(--glass-bg);color:var(--text-main);">Create account</button>
+        </div>
+      </form>
+      <button class="tos-btn" id="authClose" type="button" style="background:var(--glass-bg);color:var(--text-main);margin-top:10px;">Close</button>
     </div>
   </div>
 
@@ -1201,5 +1253,227 @@
         </iframe>`;
     }
   </script>
+
+  <script type="module" id="firebase-auth-setup">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+      signInWithEmailAndPassword, signOut, updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCtTqEpgFnv6JWHXX2Z8QACPthDMCpIPLc",
+      authDomain: "cowatch-6d4f4.firebaseapp.com",
+      projectId: "cowatch-6d4f4",
+      storageBucket: "cowatch-6d4f4.firebasestorage.app",
+      messagingSenderId: "963802163221",
+      appId: "1:963802163221:web:99ef12f28539b636e4861c"
+    };
+    const SIGNUP_SHEETS_ENDPOINT = "https://script.google.com/macros/s/AKfycbykyfFaPOMA2-GOB8ZfY7dmKKLvqJxHsps8pd3V5d6-F7ymX_5_yyNivDhNR7xpa8o9/exec";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const LOCAL_HISTORY_KEY = "ytPlayerWatchHistory";
+    let signedInUser = null;
+    let accountHistory = [];
+    let creatingAccount = false;
+
+    const authOverlay = document.getElementById("authOverlay");
+    const authForm = document.getElementById("authForm");
+    const authStatus = document.getElementById("authStatus");
+    const authButton = document.getElementById("accountButton");
+    const authPassword = document.getElementById("authPassword");
+    const authEmail = document.getElementById("authEmail");
+    const authName = document.getElementById("authName");
+    const authNameField = document.getElementById("authNameField");
+    const signupNotice = document.getElementById("signupNotice");
+    const authHeading = document.getElementById("authHeading");
+    const authSubmit = document.getElementById("authSubmit");
+    const authModeToggle = document.getElementById("authModeToggle");
+
+    function readLocalHistory() {
+      try {
+        const value = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+        return Array.isArray(value) ? value.slice(0, 20) : [];
+      } catch (_) { return []; }
+    }
+
+    function renderHistory() {
+      const list = document.getElementById("historyList");
+      const container = document.getElementById("historyContainer");
+      list.replaceChildren();
+      container.style.display = accountHistory.length ? "block" : "none";
+      accountHistory.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "history-item";
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        const icon = document.createElement("i");
+        icon.className = item.type === "playlist" ? "fa-solid fa-list" : "fa-brands fa-youtube";
+        const label = document.createElement("span");
+        label.className = "history-text";
+        label.textContent = item.title || (item.type + ": " + item.id);
+        row.append(icon, label);
+        const play = () => {
+          if (item.type === "playlist") loadPlaylist(item.id);
+          else requestVideoPlayback(item.id);
+        };
+        row.addEventListener("click", play);
+        row.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") { event.preventDefault(); play(); }
+        });
+        list.appendChild(row);
+      });
+    }
+
+    async function persistHistory() {
+      if (!signedInUser) {
+        localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(accountHistory));
+        return;
+      }
+      await setDoc(doc(db, "users", signedInUser.uid), {
+        watchHistory: accountHistory,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    }
+
+    window.addToHistory = async function(title, id, type) {
+      const item = { title, id, type, watchedAt: new Date().toISOString() };
+      accountHistory = [item, ...accountHistory.filter(entry => !(entry.id === id && entry.type === type))].slice(0, 20);
+      renderHistory();
+      try { await persistHistory(); }
+      catch (error) { console.error("Watch history could not be saved.", error); }
+    };
+
+    window.clearHistory = async function() {
+      accountHistory = [];
+      renderHistory();
+      try { await persistHistory(); }
+      catch (error) { authStatus.textContent = "History could not be cleared. Please try again."; }
+    };
+
+    function setAuthMode(isCreating) {
+      creatingAccount = isCreating;
+      authHeading.textContent = isCreating ? "Create account" : "Sign in";
+      authSubmit.textContent = isCreating ? "Create account" : "Sign in";
+      authModeToggle.textContent = isCreating ? "I already have an account" : "Create account";
+      authNameField.hidden = !isCreating;
+      authName.required = isCreating;
+      signupNotice.hidden = !isCreating;
+      authPassword.autocomplete = isCreating ? "new-password" : "current-password";
+      authStatus.textContent = "";
+    }
+
+    function openAuth() {
+      authStatus.textContent = "";
+      setAuthMode(false);
+      if (signedInUser) {
+        authStatus.textContent = "Signed in as " + signedInUser.email;
+        authSubmit.textContent = "Sign out";
+        authModeToggle.hidden = true;
+        authForm.onsubmit = async event => {
+          event.preventDefault();
+          try { await signOut(auth); authOverlay.classList.remove("show"); }
+          catch (_) { authStatus.textContent = "Could not sign out. Please try again."; }
+        };
+      } else {
+        authModeToggle.hidden = false;
+        authForm.onsubmit = null;
+      }
+      authOverlay.classList.add("show");
+    }
+
+    authButton.addEventListener("click", openAuth);
+    document.getElementById("authClose").addEventListener("click", () => authOverlay.classList.remove("show"));
+    authOverlay.addEventListener("click", event => {
+      if (event.target === authOverlay) authOverlay.classList.remove("show");
+    });
+    authModeToggle.addEventListener("click", () => setAuthMode(!creatingAccount));
+
+    async function sendSignupToSheet(name, email) {
+      // The public Apps Script endpoint accepts JSON. Consent remains false:
+      // account registration does not subscribe anyone to marketing.
+      await fetch(SIGNUP_SHEETS_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ name, email, marketingConsent: false })
+      });
+    }
+
+    authForm.addEventListener("submit", async event => {
+      if (authForm.onsubmit) return; // Signed-in sign-out handler owns this form.
+      event.preventDefault();
+      authSubmit.disabled = true;
+      authStatus.textContent = creatingAccount ? "Creating account…" : "Signing in…";
+      try {
+        if (creatingAccount) {
+          const name = authName.value.trim();
+          const email = authEmail.value.trim().toLowerCase();
+          const credential = await createUserWithEmailAndPassword(auth, email, authPassword.value);
+          await updateProfile(credential.user, { displayName: name });
+          try {
+            await sendSignupToSheet(name, email);
+            authStatus.textContent = "Account created. Your details were sent to the signup sheet for account registration only.";
+          } catch (sheetError) {
+            console.error("Could not submit signup to the sheet.", sheetError);
+            authStatus.textContent = "Account created, but the signup sheet could not be reached. Please tell the site owner.";
+          }
+          setTimeout(() => authOverlay.classList.remove("show"), 1800);
+        } else {
+          await signInWithEmailAndPassword(auth, authEmail.value.trim().toLowerCase(), authPassword.value);
+          authOverlay.classList.remove("show");
+        }
+      } catch (error) {
+        const messages = {
+          "auth/email-already-in-use": "An account already uses that email. Try signing in.",
+          "auth/invalid-email": "Please enter a valid email address.",
+          "auth/weak-password": "Choose a password with at least 6 characters.",
+          "auth/invalid-credential": "Email or password is incorrect.",
+          "auth/too-many-requests": "Too many attempts. Please wait and try again."
+        };
+        authStatus.textContent = messages[error.code] || "Could not complete that. Please check your details and try again.";
+      } finally {
+        authSubmit.disabled = false;
+      }
+    });
+
+    onAuthStateChanged(auth, async user => {
+      signedInUser = user;
+      authButton.textContent = user ? "Account" : "Sign in";
+      if (!user) {
+        accountHistory = readLocalHistory();
+        renderHistory();
+        return;
+      }
+      try {
+        const snapshot = await getDoc(doc(db, "users", user.uid));
+        const saved = snapshot.exists() && Array.isArray(snapshot.data().watchHistory)
+          ? snapshot.data().watchHistory : [];
+        const guestHistory = readLocalHistory();
+        accountHistory = saved.slice(0, 20);
+        if (!saved.length && guestHistory.length) {
+          accountHistory = guestHistory;
+          await persistHistory();
+          localStorage.removeItem(LOCAL_HISTORY_KEY);
+        }
+        renderHistory();
+      } catch (error) {
+        console.error("Could not load account watch history.", error);
+        accountHistory = [];
+        renderHistory();
+        authButton.title = "Signed in, but watch history could not be loaded. Check Firestore rules.";
+      }
+    });
+
+    if (!signedInUser) {
+      accountHistory = readLocalHistory();
+      renderHistory();
+    }
+  </script>
+
 </body>
 </html>
